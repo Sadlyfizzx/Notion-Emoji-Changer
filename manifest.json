@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "Notion Emoji Injector",
+  "version": "1.0",
+  "description": "Injects Apple color emojis into web pages.",
+  "permissions": ["activeTab", "storage"],
+  "icons": {
+    "16": "Icon.png",
+    "48": "Icon.png",
+    "128": "Icon.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["styles.css"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "Icon.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "homepage_url": "https://github.com/yourusername/Apple-Color-Emojis-Injector",
+  "author": "Ziad"
+}

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support Us</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            padding: 20px; /* Increased padding for better spacing */
+            width: 300px; /* Slightly wider for better layout */
+            background-color: #333; /* Default dark theme */
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            color: #f4f4f9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        h2 {
+            margin: 0 0 10px;
+            font-size: 1.8em; /* Larger font size for the heading */
+            text-transform: uppercase;
+            letter-spacing: 1px; /* Added letter spacing for a modern look */
+        }
+        p {
+            margin: 0 0 20px; /* Increased margin below the paragraph */
+            line-height: 1.6;
+            font-size: 1em; /* Adjusted font size for readability */
+            padding: 0 10px; /* Adjusted padding for better spacing */
+        }
+        .donation-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 20px; /* Increased padding for button */
+            cursor: pointer;
+            border-radius: 25px; /* More pronounced rounded corners */
+            font-size: 1.1em; /* Slightly larger font for the button */
+            transition: background-color 0.3s, transform 0.2s;
+            width: 100%;
+            margin-bottom: 15px; /* Increased margin below button */
+        }
+        .donation-button:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+        .footer {
+            font-size: 0.8em;
+            color: #ccc; /* Lighter footer text */
+            margin-top: auto; /* Pushes the footer to the bottom */
+        }
+        .footer p {
+            margin: 5px 0; /* Reduced margin for footer */
+        }
+    </style>
+</head>
+<body>
+    <h2>Love the Extension?</h2>
+    <p>Your support helps us improve! Consider making a donation.</p>
+    <button id="donate-button" class="donation-button">
+        Support Us
+    </button>
+    <div class="footer">
+        <p>© 2024 Ziad's Creative Corner</p>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
