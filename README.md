@@ -7,9 +7,8 @@ Enhance your Notion experience with Apple’s vibrant color emojis, making your 
 The Emojis Injector Extension is a lightweight Chrome extension that brings Apple-style color emojis to Notion pages, transforming your workspace into a more engaging and fun environment. **Note:** Currently, this extension only works on Notion.
 
 ## ✨ Features
-- **Apple-Style Color Emojis**: Converts plain-text emojis into Apple color emojis for a more dynamic look.
+- **Apple-Style Color Emojis**: Converts plain-text emojis into Apple color emojis for aesthetic look.
 - **Notion Compatibility**: Specifically designed to work on Notion pages.
-- **User-Friendly Popup**: Simple and clean interface for managing extension settings and updates.
 
 ## 🚀 Getting Started
 
