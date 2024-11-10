@@ -1,33 +1,55 @@
 # Emojis Injector Extension 🎉
 
 **Inject Apple-Style Color Emojis on Notion!**  
-Enhance your Notion experience with Apple’s vibrant color emojis, making your notes and projects more expressive and visually appealing.
+Enhance your Notion experience with Apple's vibrant color emojis, making your notes and projects more expressive and visually appealing.
 
 ## 📖 Overview
-The Emojis Injector Extension is a lightweight Chrome extension that brings Apple-style color emojis to Notion pages, transforming your workspace into a more engaging and fun environment. **Note:** Currently, this extension only works on Notion.
+The Emojis Injector Extension is a lightweight browser extension that brings Apple-style color emojis to Notion pages, transforming your workspace into a more engaging and fun environment. **Note:** Works on both Notion web and desktop application.
 
 ## ✨ Features
 - **Apple-Style Color Emojis**: Converts plain-text emojis into Apple color emojis for aesthetic look.
-- **Notion Compatibility**: Specifically designed to work on Notion pages.
+- **Cross-Platform Compatibility**: Works on both Notion web and desktop application.
+- **Browser-Agnostic**: Compatible with most modern browsers.
+- **Simple Implementation**: Easy to set up whether you're using browser extension or desktop app injection.
 
 ## 🚀 Getting Started
 
+### For Web Browsers
 1. **Clone or Download**: Clone the repository or download it as a ZIP file.
-2. **Install in Chrome**:
-   - Go to `chrome://extensions/` in your Chrome browser.
-   - Enable "Developer Mode" in the top-right corner.
-   - Click "Load unpacked" and select the extension's folder.
+2. **Install in Your Browser**:
+   - Open your browser's extension management page
+   - Enable "Developer Mode" or similar option
+   - Click "Load unpacked" and select the extension's folder
 3. **Use on Notion**: Open any Notion page to see Apple-style emojis in action!
 
+### For Notion Desktop App
+1. **Access Developer Tools**:
+   - Press `Alt` key
+   - Go to `View` in the menu bar
+   - Select `Toggle Developer Tools`
+2. **Inject the Code**:
+   - In the Developer Tools window, navigate to the Console tab
+   - Copy the code from `styles.css` and paste it into the console
+   - Copy the code from `content.js` and paste it into the console
+   - You can find both files in this repository
+3. **Important Notes**:
+   - This process needs to be repeated each time you open the Notion app
+   - The injection is temporary and will reset when you close the app
+
 ## 🤝 Contributing
-Contributions are welcome! Whether it’s reporting bugs, suggesting new features, or improving existing functionality, we’d love your input.
+Contributions are welcome! Whether it's reporting bugs, suggesting new features, or improving existing functionality, we'd love your input.
 
 To contribute:
-1. Fork the repository.
-2. Create a new branch (`git checkout -b feature/YourFeature`).
-3. Commit your changes (`git commit -am 'Add YourFeature'`).
-4. Push the branch (`git push origin feature/YourFeature`).
-5. Open a Pull Request.
+1. Fork the repository
+2. Create a new branch (`git checkout -b feature/YourFeature`)
+3. Commit your changes (`git commit -am 'Add YourFeature'`)
+4. Push the branch (`git push origin feature/YourFeature`)
+5. Open a Pull Request
+
+## 🔧 Known Limitations
+- Desktop app implementation requires manual code injection each session
+- No persistent storage solution for desktop app yet
+- Code must be reinjected after app restart
 
 ## 📜 License
 This project is licensed under the MIT License.
