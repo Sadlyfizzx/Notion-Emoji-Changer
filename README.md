@@ -34,7 +34,7 @@ This project is licensed under the MIT License.
 
 ## 💬 Contact
 For questions or support, feel free to reach out:
-- Threads: [@ziadscreativecorner](https://www.threads.net/@ziadscreativecorner)
-- Instagram: [@ziadscreativecorner](https://www.instagram.com/ziadscreativecorner/)
+- Twitter: [@ziadmakesnotion](https://www.twitter.com/@ziadmakesnotion)
+- Instagram: [@ziad.notes](https://www.instagram.com/ziad.notes/)
 
 Enjoy using the **Emojis Injector Extension** and bring a colorful touch to your Notion pages! ✨
