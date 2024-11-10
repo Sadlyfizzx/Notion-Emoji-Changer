@@ -34,7 +34,7 @@ The Emojis Injector Extension is a lightweight browser extension that brings App
    - You can find both files in this repository
 3. **Important Notes**:
    - This process needs to be repeated each time you open the Notion app
-   - The injection is temporary and will reset when you close the app
+   - The injection is temporary and will reset when you fully close the app
 
 ## 🤝 Contributing
 Contributions are welcome! Whether it's reporting bugs, suggesting new features, or improving existing functionality, we'd love your input.
