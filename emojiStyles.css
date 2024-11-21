@@ -1,0 +1,18 @@
+/* Base styles for all emoji elements */
+.notion-emoji[aria-label],
+.notion-emoji[alt] {
+    display: inline-block !important;
+    vertical-align: text-bottom !important;
+    margin: 0 0.1em !important;
+    transition: opacity 100ms ease-in !important;
+    background-size: contain !important;
+    width: 1em !important;
+    height: 1em !important;
+}
+
+/* Hide broken images */
+.notion-emoji[src=""] {
+    display: none !important;
+}
+
+/* Dynamic emoji styles will be inserted here by JavaScript */
