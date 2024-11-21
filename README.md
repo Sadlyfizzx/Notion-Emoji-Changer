@@ -15,7 +15,7 @@ The Emojis Injector Extension is a lightweight browser extension that brings App
 ## 🚀 Getting Started
 
 ### For Web Browsers
-1. **Clone or Download**: Clone the repository or download it as a ZIP file.
+1. **Download the Release Files**: Get the latest version from the [Releases](https://github.com/Sadlyfizzx/Notion-Emoji-Changer/releases) section.
 2. **Install in Your Browser**:
    - Open your browser's extension management page
    - Enable "Developer Mode" or similar option
@@ -29,8 +29,7 @@ The Emojis Injector Extension is a lightweight browser extension that brings App
    - Select `Toggle Developer Tools`
 2. **Inject the Code**:
    - In the Developer Tools window, navigate to the Console tab
-   - Copy the code from `styles.css` and paste it into the console
-   - Copy the code from `content.js` and paste it into the console
+   - Copy the code from `emojiReplacer.js` and paste it into the console
    - You can find both files in this repository
 3. **Important Notes**:
    - This process needs to be repeated each time you open the Notion app
