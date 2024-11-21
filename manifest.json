@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Notion Emoji Injector",
-  "version": "1.0",
-  "description": "Injects Apple color emojis into web pages.",
+  "version": "2.0",
+  "description": "Replaces Notion emojis with Apple color emojis.",
   "permissions": ["activeTab", "storage"],
   "icons": {
     "16": "Icon.png",
@@ -12,8 +12,8 @@
   "content_scripts": [
     {
       "matches": ["*://www.notion.so/*"],
-      "js": ["content.js"],
-      "css": ["styles.css"]
+      "js": ["emojiReplacer.js"],
+      "css": ["emojiStyles.css"]
     }
   ],
   "action": {
