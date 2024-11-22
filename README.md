@@ -30,7 +30,7 @@ The Emojis Injector Extension is a lightweight browser extension that brings App
 2. **Inject the Code**:
    - In the Developer Tools window, navigate to the Console tab
    - Copy the code from `emojiReplacer.js` and paste it into the console
-   - You can find both files in this repository
+   - You can find the file in this repository
 3. **Important Notes**:
    - This process needs to be repeated each time you open the Notion app
    - The injection is temporary and will reset when you fully close the app
