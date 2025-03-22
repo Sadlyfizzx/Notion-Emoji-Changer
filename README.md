@@ -1,3 +1,4 @@
+# ⚠️ Notion Ruined the Project with Their Last Update (I'm working on fixing it) ⚠️
 # Emojis Injector Extension 🎉
 
 **Inject Apple-Style Color Emojis on Notion!**  
