@@ -1,4 +1,3 @@
-# ⚠️ Notion Ruined the Project with Their Last Update (I'm working on fixing it) ⚠️
 # Emojis Injector Extension 🎉
 
 **Inject Apple-Style Color Emojis on Notion!**  
@@ -14,6 +13,7 @@ The Emojis Injector Extension is a lightweight browser extension that brings App
 - **Simple Implementation**: Easy to set up whether you're using browser extension or desktop app injection.
 
 ## 🚀 Getting Started
+> ⚠️ Notion Ruined the Project with Their Last Update (I'm working on fixing it) ⚠️
 
 ### For Web Browsers
 1. **Download the Release Files**: Get the latest version from the [Releases](https://github.com/Sadlyfizzx/Notion-Emoji-Changer/releases) section.
