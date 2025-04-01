@@ -69,7 +69,7 @@ function replaceAllNotionIcons() {
           // Retry loading after a short delay if it fails.
           setTimeout(() => {
             el.src = emojiUrl;
-          }, 1000);
+          }, 3000);
         };
         el.src = emojiUrl;
         el.style.transition = 'opacity 100ms ease-in';
