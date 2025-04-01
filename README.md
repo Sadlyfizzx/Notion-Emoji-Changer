@@ -13,7 +13,7 @@ The Emojis Injector Extension is a lightweight browser extension that brings App
 - **Simple Implementation**: Easy to set up whether you're using browser extension or desktop app injection.
 
 ## 🚀 Getting Started
-> ⚠️ Notion Ruined the Project with Their Last Update (I'm working on fixing it) ⚠️
+> ⚠️ The pages icon have issues due to the new Notion update (I'm working on fixing them). ⚠️
 
 ### For Web Browsers
 1. **Download the Release Files**: Get the latest version from the [Releases](https://github.com/Sadlyfizzx/Notion-Emoji-Changer/releases) section.
@@ -30,8 +30,74 @@ The Emojis Injector Extension is a lightweight browser extension that brings App
    - Select `Toggle Developer Tools`
 2. **Inject the Code**:
    - In the Developer Tools window, navigate to the Console tab
-   - Copy the code from `emojiReplacer.js` and paste it into the console
-   - You can find the file in this repository
+   - Copy the code below and paste it into the console
+```
+function isEmoji(str) {
+  return /\p{Emoji}/u.test(str);
+}
+
+function replaceAllNotionIcons() {
+  // Updated selectors: include new Notion elements with data-emoji attribute.
+  document.querySelectorAll('img.notion-emoji, div[data-emoji], img[aria-label], .property-check img[aria-label]').forEach(el => {
+    // Get emoji from data-emoji, aria-label, or alt.
+    const emoji = el.getAttribute('data-emoji') || el.getAttribute('aria-label') || el.alt;
+    
+    if (emoji && isEmoji(emoji)) {
+      const emojiUrl = `https://emojicdn.elk.sh/${encodeURIComponent(emoji)}?style=apple`;
+      
+      // Create a style rule for this emoji if it doesn't exist already.
+      const styleId = `emoji-style-${emoji}`;
+      if (!document.getElementById(styleId)) {
+        const style = document.createElement('style');
+        style.id = styleId;
+        style.textContent = `
+          img.notion-emoji[alt="${emoji}"],
+          img.notion-emoji[aria-label="${emoji}"],
+          div[data-emoji="${emoji}"] {
+            background-image: url('${emojiUrl}') !important;
+            background-size: contain !important;
+            width: 1em !important;
+            height: 1em !important;
+          }
+        `;
+        document.head.appendChild(style);
+      }
+      
+      // If the element is an image, update its src and add error handling.
+      if (el.tagName === 'IMG') {
+        el.onerror = function() {
+          // Retry loading after a short delay if it fails.
+          setTimeout(() => {
+            el.src = emojiUrl;
+          }, 1000);
+        };
+        el.src = emojiUrl;
+        el.style.transition = 'opacity 100ms ease-in';
+        el.style.width = '1em';
+        el.style.height = '1em';
+      } else {
+        // For divs (or other non-image elements), set the background image directly.
+        el.style.backgroundImage = `url('${emojiUrl}')`;
+        el.style.backgroundSize = 'contain';
+        el.style.width = '1em';
+        el.style.height = '1em';
+      }
+    }
+  });
+}
+
+// Run initially.
+replaceAllNotionIcons();
+
+// Watch for new emoji elements being added.
+const observer = new MutationObserver(() => {
+  replaceAllNotionIcons();
+});
+observer.observe(document.body, {
+  childList: true,
+  subtree: true
+});
+```
 3. **Important Notes**:
    - This process needs to be repeated each time you open the Notion app
    - The injection is temporary and will reset when you fully close the app
