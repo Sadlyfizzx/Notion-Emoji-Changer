@@ -13,7 +13,7 @@ The Emojis Injector Extension is a lightweight browser extension that brings App
 - **Simple Implementation**: Easy to set up whether you're using browser extension or desktop app injection.
 
 ## 🚀 Getting Started
-> ⚠️ The pages icon have issues due to the new Notion update (I'm working on fixing them). ⚠️
+> ⚠️ The Sidebar and Pages Icon Have Issues Due to The New Notion Update (I'm Working on Fixing Them). ⚠️
 
 ### For Web Browsers
 1. **Download the Release Files**: Get the latest version from the [Releases](https://github.com/Sadlyfizzx/Notion-Emoji-Changer/releases) section.
