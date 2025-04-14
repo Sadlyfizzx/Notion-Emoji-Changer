@@ -13,7 +13,6 @@ The Emojis Injector Extension is a lightweight browser extension that brings App
 - **Simple Implementation**: Easy to set up whether you're using browser extension or desktop app injection.
 
 ## 🚀 Getting Started
-> ⚠️ The Sidebar (desktop app) and Pages Icon Have Issues Due to The New Notion Update (I'm Working on Fixing Them). ⚠️
 
 ### For Web Browsers
 1. **Download the Release Files**: Get the latest version from the [Releases](https://github.com/Sadlyfizzx/Notion-Emoji-Changer/releases) section.
@@ -36,24 +35,40 @@ function isEmoji(str) {
   return /\p{Emoji}/u.test(str);
 }
 
+function getFirstEmoji(str = '') {
+  const match = [...str.matchAll(/\p{Emoji}/gu)];
+  return match.length ? match[0][0] : null;
+}
+
 function replaceAllNotionIcons() {
-  // Updated selectors: include new Notion elements with data-emoji attribute.
-  document.querySelectorAll('img.notion-emoji, div[data-emoji], img[aria-label], .property-check img[aria-label]').forEach(el => {
-    // Get emoji from data-emoji, aria-label, or alt.
-    const emoji = el.getAttribute('data-emoji') || el.getAttribute('aria-label') || el.alt;
-    
+  const emojiElements = [
+    ...document.querySelectorAll('img.notion-emoji, div[data-emoji], img[aria-label], .property-check img[aria-label]')
+  ];
+
+  // Add page icon detection (same as before)
+  document.querySelectorAll('div[style*="position: relative"]').forEach(div => {
+    const imgs = div.querySelectorAll('img');
+    if (imgs.length === 2 && imgs[0].classList.contains('notion-emoji')) {
+      emojiElements.push(imgs[0]);
+      emojiElements.push(imgs[1]);
+    }
+  });
+
+  emojiElements.forEach(el => {
+    const raw = el.getAttribute('data-emoji') || el.getAttribute('aria-label') || el.alt;
+    const emoji = getFirstEmoji(raw);
+
     if (emoji && isEmoji(emoji)) {
       const emojiUrl = `https://emojicdn.elk.sh/${encodeURIComponent(emoji)}?style=apple`;
-      
-      // Create a style rule for this emoji if it doesn't exist already.
       const styleId = `emoji-style-${emoji}`;
+
       if (!document.getElementById(styleId)) {
         const style = document.createElement('style');
         style.id = styleId;
         style.textContent = `
-          img.notion-emoji[alt="${emoji}"],
-          img.notion-emoji[aria-label="${emoji}"],
-          div[data-emoji="${emoji}"] {
+          img.notion-emoji[alt*="${emoji}"],
+          img.notion-emoji[aria-label*="${emoji}"],
+          div[data-emoji*="${emoji}"] {
             background-image: url('${emojiUrl}') !important;
             background-size: contain !important;
             width: 1em !important;
@@ -62,21 +77,18 @@ function replaceAllNotionIcons() {
         `;
         document.head.appendChild(style);
       }
-      
-      // If the element is an image, update its src and add error handling.
+
       if (el.tagName === 'IMG') {
-        el.onerror = function() {
-          // Retry loading after a short delay if it fails.
+        el.onerror = function () {
           setTimeout(() => {
             el.src = emojiUrl;
-          }, 3000);
+          }, 1000);
         };
         el.src = emojiUrl;
         el.style.transition = 'opacity 100ms ease-in';
         el.style.width = '1em';
         el.style.height = '1em';
       } else {
-        // For divs (or other non-image elements), set the background image directly.
         el.style.backgroundImage = `url('${emojiUrl}')`;
         el.style.backgroundSize = 'contain';
         el.style.width = '1em';
@@ -86,10 +98,10 @@ function replaceAllNotionIcons() {
   });
 }
 
-// Run initially.
+// Initial run
 replaceAllNotionIcons();
 
-// Watch for new emoji elements being added.
+// Observe mutations
 const observer = new MutationObserver(() => {
   replaceAllNotionIcons();
 });
