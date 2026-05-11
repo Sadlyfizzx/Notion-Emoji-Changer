@@ -26,10 +26,17 @@ Works on Notion Web (Chrome, Edge, Brave, Opera) and Notion Desktop (via DevTool
 ---
 
 ## Preview
+### Apple Emoji Style Preview
 <img width="1900" height="814" alt="Apple Emoji" src="https://github.com/user-attachments/assets/dee349c6-3105-40a1-9b5e-feb787ab0e6b" />
-<img width="1898" height="822" alt="Facebook Emoji" src="https://github.com/user-attachments/assets/42bc0b2f-cc22-466f-8a77-74f04c9fada8" />
+
+### Google Emoji Style Preview
+<img width="1899" height="822" alt="Google Emoji" src="https://github.com/user-attachments/assets/0358b9a7-be5d-4009-a075-0aa53c0132d8" />
+
+### Twitter Emoji Style Preview
 <img width="1899" height="821" alt="Twitter Emoji" src="https://github.com/user-attachments/assets/8e37e545-1de4-4900-ac54-5f7dc347c592" />
-<img width="1899" height="822" alt="Googel Emoji" src="https://github.com/user-attachments/assets/0358b9a7-be5d-4009-a075-0aa53c0132d8" />
+
+### Facebook Emoji Style Preview
+<img width="1898" height="822" alt="Facebook Emoji" src="https://github.com/user-attachments/assets/42bc0b2f-cc22-466f-8a77-74f04c9fada8" />
 
 ---
 
