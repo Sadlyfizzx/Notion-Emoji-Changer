@@ -1,25 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Notion Emoji Injector</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-    <link href="popup.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link href="popup.css" rel="stylesheet" />
+  <base target="_blank">
 </head>
-<body>
-    <h2>Notion Emoji Injector</h2>
-    
-    <p>Your support helps us improve! Consider making a donation.</p>
-    <button id="donate-button" class="donation-button">
-        Support Us
-    </button>
-    <div class="footer">
-        <p>© 2025 Ziad Digitals</p>
-        <p class="version">v4.0</p>
+  <body>
+    <div class="popup-container">
+      <!-- Header -->
+      <header class="header">
+        <div class="logo">
+          <span class="logo-emoji">🎨</span>
+          <div class="logo-text">
+            <h1>Emoji Injector</h1>
+            <span class="badge" id="status-badge">Active</span>
+          </div>
+        </div>
+        <p class="subtitle">Style your Notion emojis</p>
+      </header>
+
+      <!-- Master Toggle -->
+      <section class="control-section">
+        <div class="control-row">
+          <div class="control-label">
+            <span class="control-icon">⚡</span>
+            <div>
+              <span class="control-title">Enable Injection</span>
+              <span class="control-desc">Replace Notion emojis with styled ones</span>
+            </div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="toggle-enabled" checked />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </section>
+
+      <!-- Emoji Style Selector -->
+      <section class="control-section">
+        <div class="section-header">
+          <span class="section-icon">🎭</span>
+          <span class="section-title">Emoji Style</span>
+        </div>
+        <div class="style-grid" id="style-grid">
+          <button class="style-card active" data-style="apple">
+            <span class="style-preview">🍎</span>
+            <span class="style-name">Apple</span>
+          </button>
+          <button class="style-card" data-style="google">
+            <span class="style-preview">🍏</span>
+            <span class="style-name">Google</span>
+          </button>
+          <button class="style-card" data-style="twitter">
+            <span class="style-preview">🐦</span>
+            <span class="style-name">Twitter</span>
+          </button>
+          <button class="style-card" data-style="facebook">
+            <span class="style-preview">👍</span>
+            <span class="style-name">Facebook</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Preview -->
+      <section class="control-section preview-section">
+        <div class="section-header">
+          <span class="section-icon">👁️</span>
+          <span class="section-title">Live Preview</span>
+        </div>
+        <div class="preview-box">
+          <div class="preview-emoji" id="preview-emoji">🚀</div>
+          <div class="preview-meta">
+            <span class="preview-label">Style:</span>
+            <span class="preview-value" id="preview-style">Apple</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="footer">
+        <button id="donate-button" class="donate-btn">
+          <span>☕</span> Support the project
+        </button>
+        <p class="version">v5.1 · Built by Ziad</p>
+      </footer>
     </div>
 
     <script src="popup.js"></script>
-</body>
+  </body>
 </html>
-

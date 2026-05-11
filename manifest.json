@@ -1,9 +1,10 @@
 {
-  "manifest_version": 4,
+  "manifest_version": 3,
   "name": "Notion Emoji Injector",
-  "version": "4.0",
-  "description": "Replaces Notion emojis with Apple color emojis.",
-  "permissions": ["activeTab", "storage"],
+  "version": "5.1",
+  "description": "Replaces Notion emojis with styled color emojis.",
+  "permissions": ["storage"],
+  "host_permissions": ["*://www.notion.so/*"],
   "icons": {
     "16": "Icon.png",
     "48": "Icon.png",
@@ -13,17 +14,13 @@
     {
       "matches": ["*://www.notion.so/*"],
       "js": ["emojiReplacer.js"],
-      "css": ["emojiStyles.css"]
+      "run_at": "document_start"
     }
   ],
   "action": {
     "default_popup": "popup.html",
     "default_icon": "Icon.png"
   },
-  "background": {
-    "service_worker": "background.js"
-  },
   "homepage_url": "https://github.com/Sadlyfizzx/Apple-Color-Emojis-Injector",
   "author": "Ziad"
 }
-

@@ -1,8 +1,40 @@
+/* ============================================================
+   Notion Emoji Injector — Content Styles
+   ============================================================ */
+
+/* Block 1: Hide native Notion emojis until JS processes them.
+   img[aria-label] is intentionally excluded — too broad. */
+img.notion-emoji,
+div[data-emoji] {
+    opacity: 0 !important;
+    transition: opacity 50ms ease-in;
+}
+
+/* Block 2: Reveal once JS marks them done */
+img.notion-emoji[data-apple-emoji-v3],
+div[data-emoji][data-apple-emoji-v3] {
+    opacity: 1 !important;
+}
+
+/* SAFETY: force-hide base placeholder images inside page icons.
+   The overlay sibling is the one that should remain visible. */
+.notion-record-icon div[style*="position: relative"] > img.notion-emoji[data-apple-emoji-v3] {
+    opacity: 0 !important;
+}
+
+/* Block 3: Size normalization for inline emoji class */
 .notion-emoji {
     display: inline-block !important;
-    vertical-align: text-bottom !important;
-    width: 1em !important;
-    height: 1em !important;
+    vertical-align: -0.05em !important;
+    width: 1.1em !important;
+    height: 1.1em !important;
     background-size: contain !important;
-    margin: 0 0.1em !important;
+    margin: 0 !important;
+}
+
+/* Block 4: Page icon / sidebar icon centering */
+div.notion-record-icon {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
 }
