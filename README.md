@@ -1,132 +1,113 @@
-# Emojis Injector Extension 🎉
+# Notion Emoji Injector 🎨
 
-**Inject Apple-Style Color Emojis on Notion!**  
-Enhance your Notion experience with Apple's vibrant color emojis, making your notes and projects more expressive and visually appealing.
+Replace Notion's native emojis with Apple, Google, Twitter, or Facebook styled emojis. Popup controls, zero flicker, instant style switching.
 
-## 📖 Overview
-The Emojis Injector Extension is a lightweight browser extension that brings Apple-style color emojis to Notion pages, transforming your workspace into a more engaging and fun environment. **Note:** Works on both Notion web and desktop application.
+[![Version](https://img.shields.io/badge/version-5.1-blue.svg)]()
+[![License](https://img.shields.io/badge/license-MIT-green.svg)]()
 
-## ✨ Features
-- **Apple-Style Color Emojis**: Converts plain-text emojis into Apple color emojis for aesthetic look.
-- **Cross-Platform Compatibility**: Works on both Notion web and desktop application.
-- **Browser-Agnostic**: Compatible with most modern browsers.
-- **Simple Implementation**: Easy to set up whether you're using browser extension or desktop app injection.
+---
 
-## 🚀 Getting Started
-### A FULL TUTORIAL FOR ALL BROWSERS [HERE](https://quaint-fibre-1c9.notion.site/Hello-there-1dd384b1accc80d68f2df1deb8c00ead?pvs=4)
+## What It Does
 
-### For Web Browsers
-1. **Download the Release Files**: Get the latest version from the [Releases](https://github.com/Sadlyfizzx/Notion-Emoji-Changer/releases) section.
-2. **Install in Your Browser**:
-   - Open your browser's extension management page
-   - Enable "Developer Mode" or similar option
-   - Click "Load unpacked" and select the extension's folder
-3. **Use on Notion**: Open any Notion page to see Apple-style emojis in action!
+Notion Emoji Injector intercepts Notion's native emoji rendering and swaps it with high-quality styled emojis from a CDN. Pick your emoji set, toggle injection on/off, and get consistent emojis across your workspace.
 
-### For Notion Desktop App
-1. **Access Developer Tools**:
-   - Press `Alt` key
-   - Go to `View` in the menu bar
-   - Select `Toggle Developer Tools`
-2. **Inject the Code**:
-   - In the Developer Tools window, navigate to the Console tab
-   - Copy the code below and paste it into the console
-```
-function isEmoji(str) {
-  return /\p{Emoji}/u.test(str);
-}
+Works on Notion Web (Chrome, Edge, Brave, Opera) and Notion Desktop (via DevTools console injection).
 
-function getEmojiFromElement(el) {
-  const dataEmoji = el.getAttribute('data-emoji');
-  const ariaLabel = el.getAttribute('aria-label');
-  const alt = el.alt;
-  let emoji = dataEmoji || ariaLabel;
-  if (!emoji && alt) emoji = alt.split(/\s/)[0];
-  return emoji;
-}
+---
 
-function applyEmojiStyle(el, emoji, emojiUrl) {
-  const styleId = `emoji-style-${emoji}`;
-  if (!document.getElementById(styleId)) {
-    const style = document.createElement('style');
-    style.id = styleId;
-    style.textContent = `
-      img.notion-emoji[alt*="${emoji}"],
-      img.notion-emoji[aria-label="${emoji}"],
-      div[data-emoji="${emoji}"] {
-        background-image: url('${emojiUrl}') !important;
-        background-size: contain !important;
-        width: 1em !important;
-        height: 1em !important;
-      }
-    `;
-    document.head.appendChild(style);
-  }
+## Features
 
-  if (el.tagName === 'IMG') {
-    el.onerror = () => setTimeout(() => el.src = emojiUrl, 1000);
-    el.src = emojiUrl;
-    el.style.transition = 'opacity 100ms ease-in';
-    el.style.width = '1em';
-    el.style.height = '1em';
-  } else {
-    el.style.backgroundImage = `url('${emojiUrl}')`;
-    el.style.backgroundSize = 'contain';
-    el.style.width = '1em';
-    el.style.height = '1em';
-  }
-}
+| Feature | Description |
+|---------|-------------|
+| **4 Emoji Styles** | Apple, Google, Twitter, and Facebook — switch anytime from the popup. |
+| **Control Panel** | Toggle the extension on/off, pick your style, and preview it live. Turning it off restores your native Notion emojis. |
+| **Synced Settings** | Your preferences carry over across tabs and browser sessions automatically. |
 
-function replaceAllNotionIcons() {
-  const emojiElements = [
-    ...document.querySelectorAll('img.notion-emoji, div[data-emoji], img[aria-label], .property-check img[aria-label]')
-  ];
+---
 
-  document.querySelectorAll('div[style*="position: relative"]').forEach(div => {
-    const imgs = div.querySelectorAll('img');
-    if (imgs.length === 2 && imgs[0].classList.contains('notion-emoji')) {
-      emojiElements.push(imgs[0], imgs[1]);
-    }
-  });
+## Preview
+<img width="1900" height="814" alt="Apple Emoji" src="https://github.com/user-attachments/assets/dee349c6-3105-40a1-9b5e-feb787ab0e6b" />
+<img width="1898" height="822" alt="Facebook Emoji" src="https://github.com/user-attachments/assets/42bc0b2f-cc22-466f-8a77-74f04c9fada8" />
+<img width="1899" height="821" alt="Twitter Emoji" src="https://github.com/user-attachments/assets/8e37e545-1de4-4900-ac54-5f7dc347c592" />
+<img width="1899" height="822" alt="Googel Emoji" src="https://github.com/user-attachments/assets/0358b9a7-be5d-4009-a075-0aa53c0132d8" />
 
-  emojiElements.forEach(el => {
-    const emoji = getEmojiFromElement(el);
-    if (emoji && isEmoji(emoji)) {
-      const emojiUrl = `https://emojicdn.elk.sh/${encodeURIComponent(emoji)}?style=apple`;
-      applyEmojiStyle(el, emoji, emojiUrl);
-    }
-  });
-}
+---
 
-replaceAllNotionIcons();
+## Installation
 
-const observer = new MutationObserver(replaceAllNotionIcons);
-observer.observe(document.body, { childList: true, subtree: true });
-```
-3. **Important Notes**:
-   - This process needs to be repeated each time you open the Notion app
-   - The injection is temporary and will reset when you fully close the app
+### Browser Extension (Recommended)
 
-## 🤝 Contributing
-Contributions are welcome! Whether it's reporting bugs, suggesting new features, or improving existing functionality, we'd love your input.
+1. Download the latest release from the [Releases](../../releases) page.
+2. Unzip the folder.
+3. Open your browser's extension management page:
+   - Chrome: `chrome://extensions`
+   - Edge: `edge://extensions`
+   - Brave: `brave://extensions`
+4. Enable **Developer mode** (toggle in the top-right).
+5. Click **Load unpacked** and select the unzipped folder.
+6. Open [notion.so](https://www.notion.so) and click the extension icon.
 
-To contribute:
+### Notion Desktop App
+
+> ⚠️ Desktop injection is temporary — it resets when you close the app.
+
+1. Open the Notion Desktop app.
+2. Press `Alt` → `View` → `Toggle Developer Tools`.
+3. Go to the **Console** tab.
+4. Paste the contents of [`emojiReplacer.js`](../../blob/main/emojiReplacer.js) and press Enter.
+
+---
+
+## Usage
+
+Click the extension icon to open the control panel:
+
+| Control | What It Does |
+|---------|-------------|
+| **Enable Injection** | Turn the extension on or off. Turning off refreshes the active Notion tab to restore native emojis. |
+| **Emoji Style** | Pick Apple, Google, Twitter, or Facebook. Updates all open Notion tabs instantly. |
+| **Live Preview** | See your selected style in the popup before closing it. |
+
+Settings save automatically and sync across your browser profile.
+
+---
+
+## Architecture
+
+- **Dynamic CSS Injection** — Styles are only injected when enabled, so disabling leaves no residue.
+- **Dual Observer Strategy** — A debounced `MutationObserver` handles real-time DOM changes; `requestIdleCallback` catches any React re-renders it misses.
+- **CDN Abstraction** — Emoji URLs build dynamically from the selected style, so switching is instant.
+- **Processed Marking** — Elements get tagged with `data-apple-emoji-v3` to prevent redundant processing and loops.
+- **Overlay Detection** — Page icons use a two-image structure (base + overlay). The extension targets only the overlay to avoid double-render bugs.
+
+---
+
+## Known Limitations
+
+- Some complex ZWJ sequences (e.g., 🧑‍💻, 👨‍👩‍👧‍👦) may render slightly split due to CDN sprite limitations.
+- Desktop app requires manual re-injection after every app restart.
+
+---
+
+## Contributing
+
 1. Fork the repository
-2. Create a new branch (`git checkout -b feature/YourFeature`)
-3. Commit your changes (`git commit -am 'Add YourFeature'`)
-4. Push the branch (`git push origin feature/YourFeature`)
+2. Create a feature branch: `git checkout -b feature/YourFeature`
+3. Commit: `git commit -am 'Add YourFeature'`
+4. Push: `git push origin feature/YourFeature`
 5. Open a Pull Request
 
-## 🔧 Known Limitations
-- Desktop app implementation requires manual code injection each session
-- No persistent storage solution for desktop app yet
-- Code must be reinjected after app restart
+---
 
-## 📜 License
-This project is licensed under the MIT License.
+## License
 
-## 💬 Contact
-For questions or support, feel free to reach out:
-- Twitter: [@ziadverse](https://www.twitter.com/@ziadverse)
+[MIT License](LICENSE)
 
-Enjoy using the **Emojis Injector Extension** and bring a colorful touch to your Notion pages! ✨
+---
+
+## Support
+
+- **Twitter/X**: [@ziadverse](https://twitter.com/ziadverse)
+- **Ko-fi**: [ko-fi.com/sadlyfizzx](https://ko-fi.com/sadlyfizzx)
+
+Built by **Ziad**.
