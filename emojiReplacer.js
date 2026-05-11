@@ -2,17 +2,22 @@
   'use strict';
 
   /* ============================================================
-     Injected CSS (moved from manifest to avoid leaking when disabled)
+     Injected CSS (dynamic — only injected when extension is enabled)
      ============================================================ */
 
   const INJECTOR_CSS = `
-    img.notion-emoji,
     div[data-emoji] {
         opacity: 0 !important;
         transition: opacity 50ms ease-in;
     }
-    img.notion-emoji[data-apple-emoji-v3],
+    .notion-record-icon img.notion-emoji {
+        opacity: 0 !important;
+        transition: opacity 50ms ease-in;
+    }
     div[data-emoji][data-apple-emoji-v3] {
+        opacity: 1 !important;
+    }
+    .notion-record-icon img.notion-emoji[data-apple-emoji-v3] {
         opacity: 1 !important;
     }
     .notion-record-icon div[style*="position: relative"] > img.notion-emoji[data-apple-emoji-v3] {
@@ -51,11 +56,12 @@
   const RETRY_ATTR = 'data-emoji-retry-count';
   const MAX_RETRIES = 3;
   const DEBOUNCE_MS = 100;
+  const SAFETY_INTERVAL_MS = 300;
 
   let settings = { enabled: true, emojiStyle: 'apple' };
   let debounceTimer = null;
   let lastFaviconEmoji = null;
-  let idleCallbackId = null;
+  let safetyIntervalId = null;
 
   /* ============================================================
      Utilities
@@ -83,7 +89,14 @@
   function isAlreadyStyled(el, emojiUrl) {
     if (!el.hasAttribute(PROCESSED_MARK)) return false;
     if (el.tagName === "IMG") {
-      return el.src === emojiUrl;
+      const inPageIcon = isPageIcon(el);
+      const inPicker = isEmojiPicker(el);
+      if (inPageIcon || inPicker) {
+        return el.src === emojiUrl;
+      } else {
+        // Inline text emoji: checked via backgroundImage
+        return el.style.backgroundImage.includes(emojiUrl);
+      }
     } else {
       return el.style.backgroundImage.includes(emojiUrl);
     }
@@ -121,10 +134,8 @@
 
     if (!settings.enabled) return;
 
-    // If style changed, clear favicon cache so the tab icon updates too
     if (newSettings.emojiStyle !== undefined && newSettings.emojiStyle !== prevStyle) {
       lastFaviconEmoji = null;
-      // Also clear processed marks so every emoji re-fetches with the new style
       document.querySelectorAll(`[${PROCESSED_MARK}]`).forEach(el => {
         el.removeAttribute(PROCESSED_MARK);
         el.removeAttribute(RETRY_ATTR);
@@ -149,20 +160,34 @@
     const inPicker = isEmojiPicker(el);
 
     if (el.tagName === "IMG") {
-      el.style.backgroundImage = '';
-      el.style.backgroundSize = '';
-      el.style.backgroundRepeat = '';
-      el.style.backgroundPosition = '';
+      if (inPageIcon || inPicker) {
+        // Page icons & picker: use src (these don't have aggressive DOMLock)
+        el.style.backgroundImage = '';
+        el.style.backgroundSize = '';
+        el.style.backgroundRepeat = '';
+        el.style.backgroundPosition = '';
 
-      el.onerror = () => {
-        const currentRetries = parseInt(el.getAttribute(RETRY_ATTR) || '0', 10);
-        if (currentRetries < MAX_RETRIES) {
-          el.setAttribute(RETRY_ATTR, String(currentRetries + 1));
-          setTimeout(() => (el.src = emojiUrl), 1000 * (currentRetries + 1));
-        }
-      };
-      el.src = emojiUrl;
-      el.style.transition = "opacity 100ms ease-in";
+        el.onerror = () => {
+          const currentRetries = parseInt(el.getAttribute(RETRY_ATTR) || '0', 10);
+          if (currentRetries < MAX_RETRIES) {
+            el.setAttribute(RETRY_ATTR, String(currentRetries + 1));
+            setTimeout(() => (el.src = emojiUrl), 1000 * (currentRetries + 1));
+          }
+        };
+        el.src = emojiUrl;
+        el.style.transition = "opacity 100ms ease-in";
+      } else {
+        // INLINE TEXT EMOJIS:
+        // Notion renders these via CSS background sprites on a transparent
+        // base64 GIF src. Fighting src with DOMLock causes reverts + warning
+        // spam. Instead, we override background-image — same mechanism Notion
+        // uses, so no DOMLock fight, no invisible death traps.
+        el.style.backgroundImage = `url('${emojiUrl}')`;
+        el.style.backgroundSize = 'contain';
+        el.style.backgroundPosition = 'center';
+        el.style.backgroundRepeat = 'no-repeat';
+        // Do NOT touch src — leave Notion's transparent GIF in place
+      }
 
       if (!inPageIcon && !inPicker) {
         const computedWidth = parseFloat(getComputedStyle(el).width) || 0;
@@ -172,6 +197,7 @@
         }
       }
     } else {
+      // DIV with raw emoji text (skin-tone buttons, etc.)
       el.style.backgroundImage = `url('${emojiUrl}')`;
       el.style.backgroundSize = "1em 1em";
       el.style.backgroundRepeat = "no-repeat";
@@ -297,27 +323,22 @@
      Observers & Lifecycle
      ============================================================ */
 
-  function scheduleSafetyNet() {
-    if (idleCallbackId) return;
-    const cb = typeof requestIdleCallback !== 'undefined' ? requestIdleCallback : requestAnimationFrame;
-    idleCallbackId = cb(() => {
-      idleCallbackId = null;
-      replaceAllNotionIcons();
-      scheduleSafetyNet();
-    }, { timeout: 2000 });
+  function startSafetyNet() {
+    if (safetyIntervalId) return;
+    safetyIntervalId = setInterval(replaceAllNotionIcons, SAFETY_INTERVAL_MS);
+  }
+
+  function stopSafetyNet() {
+    if (safetyIntervalId) {
+      clearInterval(safetyIntervalId);
+      safetyIntervalId = null;
+    }
   }
 
   function init() {
-    if (!settings.enabled) {
-      // Disabled: do not inject CSS, do not observe, do not process.
-      // The popup has already refreshed the page, so native Notion
-      // renders normally without any extension interference.
-      return;
-    }
+    if (!settings.enabled) return;
 
-    // Inject hiding CSS immediately to prevent FOUC
     injectCSS();
-
     replaceAllNotionIcons();
 
     if (!document.body) {
@@ -337,7 +358,9 @@
       characterData: true
     });
 
-    scheduleSafetyNet();
+    // Fast interval safety net: catches React re-renders of inline emojis
+    // that the debounced observer might miss during rapid typing.
+    startSafetyNet();
 
     if (document.head) {
       const headObserver = new MutationObserver((mutations) => {
@@ -386,12 +409,10 @@
     }
   }
 
-  // Listen for direct messages from popup
   chrome.runtime.onMessage.addListener((message) => {
     if (message.type === 'TOGGLE_ENABLED') {
       applySettings({ enabled: message.enabled });
       if (message.enabled && !cssInjected) {
-        // If enabled while already loaded but CSS not injected yet
         init();
       }
     } else if (message.type === 'CHANGE_STYLE') {
@@ -399,7 +420,6 @@
     }
   });
 
-  // Also listen for storage changes (backup sync mechanism)
   chrome.storage.onChanged.addListener((changes) => {
     const updates = {};
     if (changes.enabled) updates.enabled = changes.enabled.newValue;
@@ -409,6 +429,5 @@
     }
   });
 
-  // Bootstrap
   loadSettings().then(() => init());
 })();
