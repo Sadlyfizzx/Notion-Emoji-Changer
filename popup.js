@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Do NOT try to gracefully revert DOM mutations — they corrupt.
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         const tab = tabs[0];
-        if (tab && tab.url && tab.url.includes('notion.so')) {
+        if (tab && tab.url && tab.url.includes('app.notion.com')) {
           chrome.tabs.reload(tab.id);
         }
       });
@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function notifyContentScript(message) {
-    chrome.tabs.query({ url: '*://www.notion.so/*' }, (tabs) => {
+    chrome.tabs.query({ url: '*://app.notion.com/*' }, (tabs) => {
       tabs.forEach(tab => {
         chrome.tabs.sendMessage(tab.id, message).catch(() => {
           // Tab may not have content script loaded yet — ignore
