@@ -4,7 +4,7 @@
   "version": "5.1",
   "description": "Replaces Notion emojis with styled color emojis.",
   "permissions": ["storage"],
-  "host_permissions": ["*://www.notion.so/*"],
+  "host_permissions": ["*://app.notion.com/*"],
   "icons": {
     "16": "Icon.png",
     "48": "Icon.png",
@@ -12,7 +12,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://www.notion.so/*"],
+      "matches": ["*://app.notion.com/*"],
       "js": ["emojiReplacer.js"],
       "run_at": "document_start"
     }

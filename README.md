@@ -52,7 +52,7 @@ Works on Notion Web (Chrome, Edge, Brave, Opera) and Notion Desktop (via DevTool
    - Brave: `brave://extensions`
 4. Enable **Developer mode** (toggle in the top-right).
 5. Click **Load unpacked** and select the unzipped folder.
-6. Open [notion.so](https://www.notion.so) and click the extension icon.
+6. Open [app.notion.com](https://app.notion.com) and click the extension icon.
 
 ### Notion Desktop App
 
