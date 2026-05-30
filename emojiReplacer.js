@@ -67,8 +67,25 @@
      Utilities
      ============================================================ */
 
+  // Matches ACTUAL emoji only: pictographs, flags (regional indicators) and
+  // keycap sequences. The previous test, /\p{Emoji}/u, ALSO matched bare
+  // digits 0-9, "#" and "*" (Unicode tags them Emoji because of keycaps like
+  // 1️⃣). That made any text containing a number — e.g. a rendered LaTeX
+  // equation block — look like an emoji and get hidden. See getEmojiFromTextContent.
   function isEmoji(str) {
-    return /\p{Emoji}/u.test(str);
+    return /\p{Extended_Pictographic}|\p{Regional_Indicator}|\u{20E3}/u.test(str);
+  }
+
+  // True only when the ENTIRE string is emoji (plus modifiers / joiners /
+  // whitespace). Guards the text-content path against grabbing arbitrary
+  // element text (equation/LaTeX content, labels like "🔥 Trending") and
+  // swapping it for a broken emoji image.
+  function isPureEmoji(str) {
+    const stripped = str.replace(
+      /\p{Extended_Pictographic}|\p{Regional_Indicator}|\p{Emoji_Modifier}|[\u{FE0F}\u{200D}\u{20E3}\s]/gu,
+      ''
+    );
+    return stripped.length === 0;
   }
 
   function getEmojiFromElement(el) {
@@ -82,7 +99,7 @@
 
   function getEmojiFromTextContent(el) {
     const text = el.textContent.trim();
-    if (text && isEmoji(text)) return text;
+    if (text && isEmoji(text) && isPureEmoji(text)) return text;
     return null;
   }
 
