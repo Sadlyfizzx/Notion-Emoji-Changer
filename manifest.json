@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Notion Emoji Injector",
-  "version": "5.1",
+  "version": "5.2",
   "description": "Replaces Notion emojis with styled color emojis.",
   "permissions": ["storage"],
   "host_permissions": ["*://app.notion.com/*"],
@@ -21,6 +21,9 @@
     "default_popup": "popup.html",
     "default_icon": "Icon.png"
   },
-  "homepage_url": "https://github.com/Sadlyfizzx/Apple-Color-Emojis-Injector",
-  "author": "Ziad"
+  "homepage_url": "https://github.com/Sadlyfizzx/Notion-Emoji-Changer",
+  "author": "Ziad",
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; img-src 'self' https://emojicdn.elk.sh https://cdn.jsdelivr.net"
+  }
 }
