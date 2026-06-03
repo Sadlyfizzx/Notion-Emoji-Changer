@@ -13,13 +13,11 @@ const FILES = [
 ];
 
 let dirHandle = null;
+let latestTag = null;
 let latestVersion = null;
 
 const $ = (id) => document.getElementById(id);
 
-/* ============================================================
-   Version extraction
-   ============================================================ */
 function extractVersion(str) {
   if (!str) return '0.0.0';
   const match = str.match(/(\d+\.\d+\.\d+|\d+\.\d+)/);
@@ -38,9 +36,6 @@ function isNewer(latest, current) {
   return false;
 }
 
-/* ============================================================
-   IndexedDB helpers
-   ============================================================ */
 const DB_NAME = 'EmojiInjectorUpdater';
 const STORE = 'meta';
 
@@ -75,42 +70,6 @@ async function getHandle() {
   });
 }
 
-/* ============================================================
-   Fetch version — API first, then manifest.json fallback
-   ============================================================ */
-async function fetchLatestVersion() {
-  // Try GitHub API first
-  try {
-    const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`);
-    if (res.ok) {
-      const data = await res.json();
-      const ver = extractVersion(data.tag_name);
-      return { version: ver, source: 'release', tag: data.tag_name };
-    }
-    console.warn('[Updater] GitHub API returned', res.status, res.statusText);
-  } catch (e) {
-    console.warn('[Updater] GitHub API failed:', e.message);
-  }
-
-  // Fallback: read manifest.json from main branch
-  try {
-    const res = await fetch(`https://raw.githubusercontent.com/${REPO}/main/manifest.json`);
-    if (res.ok) {
-      const manifest = await res.json();
-      const ver = extractVersion(manifest.version);
-      return { version: ver, source: 'manifest', tag: 'main' };
-    }
-    console.warn('[Updater] Manifest fallback returned', res.status);
-  } catch (e) {
-    console.warn('[Updater] Manifest fallback failed:', e.message);
-  }
-
-  return null;
-}
-
-/* ============================================================
-   Init
-   ============================================================ */
 async function init() {
   if (!EXT_ID) {
     $('desc').textContent = 'Please open this updater from the extension popup.';
@@ -118,36 +77,45 @@ async function init() {
     return;
   }
 
-  const result = await fetchLatestVersion();
-
-  if (!result) {
-    $('desc').textContent = 'Could not reach GitHub. Check your connection, disable ad blockers for this site, or try again in a few minutes.';
+  const release = await fetchLatest();
+  if (!release) {
+    $('desc').textContent = 'Could not reach GitHub. Check your connection and retry.';
     $('btn-folder').classList.add('hidden');
     return;
   }
 
-  latestVersion = result.version;
-
+  latestTag = release.tag_name;
+  latestVersion = extractVersion(latestTag);
   const currentVersion = extractVersion(CURRENT || '0.0.0');
 
   if (CURRENT && !isNewer(latestVersion, currentVersion)) {
-    $('desc').textContent = `You are already on the latest version (v${latestVersion}).`;
+    $('desc').textContent = `You are already on the latest version (${latestTag} → ${latestVersion}).`;
     $('btn-folder').classList.add('hidden');
     return;
   }
 
-  $('desc').textContent = `Latest version: v${latestVersion} (from ${result.source}). Select your extension folder to update.`;
+  $('desc').textContent = `Latest version: ${latestTag} (${latestVersion}). Select your extension folder to update.`;
 
   const restored = await restoreDirectory();
   if (restored) {
     $('btn-folder').classList.add('hidden');
     $('btn-update').classList.remove('hidden');
-    $('desc').textContent = `Folder access granted. Ready to update to v${latestVersion}.`;
+    $('desc').textContent = `Folder access granted. Ready to update to ${latestTag}.`;
   }
 
   $('btn-folder').addEventListener('click', onSelectFolder);
   $('btn-update').addEventListener('click', onUpdate);
   $('btn-retry').addEventListener('click', onUpdate);
+}
+
+async function fetchLatest() {
+  try {
+    const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) {
+    return null;
+  }
 }
 
 async function restoreDirectory() {
@@ -164,19 +132,32 @@ async function restoreDirectory() {
 
 async function onSelectFolder() {
   try {
+    if (!window.showDirectoryPicker) {
+      throw new Error('File System Access API not available. Use Chrome or Edge.');
+    }
     dirHandle = await window.showDirectoryPicker();
     await saveHandle(dirHandle);
     $('btn-folder').classList.add('hidden');
     $('btn-update').classList.remove('hidden');
-    $('desc').textContent = `Folder selected. Ready to update to v${latestVersion}.`;
+    $('desc').textContent = `Folder selected. Ready to update to ${latestTag}.`;
+    $('status').textContent = '';
   } catch (e) {
-    $('status').textContent = 'Folder selection cancelled.';
+    console.error('[Updater] Folder selection failed:', e.name, e.message);
+    let msg = 'Folder selection failed.';
+    if (e.name === 'AbortError') {
+      msg = 'Selection cancelled. Click the button again and choose your extension folder.';
+    } else if (e.name === 'SecurityError') {
+      msg = 'Permission denied. Make sure you are on HTTPS and not in an incognito window.';
+    } else if (!window.showDirectoryPicker) {
+      msg = 'Your browser does not support folder selection. Use Chrome or Edge.';
+    } else {
+      msg = `Error: ${e.message}`;
+    }
+    $('status').textContent = msg;
+    $('status').className = 'status error';
   }
 }
 
-/* ============================================================
-   Update — pulls files from main branch
-   ============================================================ */
 async function onUpdate() {
   $('btn-update').classList.add('hidden');
   $('btn-retry').classList.add('hidden');
