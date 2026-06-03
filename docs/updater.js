@@ -14,11 +14,33 @@ const FILES = [
 
 let dirHandle = null;
 let latestTag = null;
+let latestVersion = null;
 
 const $ = (id) => document.getElementById(id);
 
 /* ============================================================
-   IndexedDB helpers for directory handle persistence
+   Version extraction — handles messy tags like NotionEmojisChangerv5.3
+   ============================================================ */
+function extractVersion(str) {
+  if (!str) return '0.0.0';
+  const match = str.match(/(\d+\.\d+\.\d+|\d+\.\d+)/);
+  return match ? match[0] : str.replace(/^v/, '');
+}
+
+function isNewer(latest, current) {
+  const l = latest.split('.').map(Number);
+  const c = current.split('.').map(Number);
+  for (let i = 0; i < Math.max(l.length, c.length); i++) {
+    const li = isNaN(l[i]) ? 0 : (l[i] || 0);
+    const ci = isNaN(c[i]) ? 0 : (c[i] || 0);
+    if (li > ci) return true;
+    if (li < ci) return false;
+  }
+  return false;
+}
+
+/* ============================================================
+   IndexedDB helpers
    ============================================================ */
 const DB_NAME = 'EmojiInjectorUpdater';
 const STORE = 'meta';
@@ -72,14 +94,17 @@ async function init() {
   }
 
   latestTag = release.tag_name;
+  latestVersion = extractVersion(latestTag);
 
-  if (CURRENT && !isNewer(latestTag.replace(/^v/, ''), CURRENT)) {
-    $('desc').textContent = `You are already on the latest version (${latestTag}).`;
+  const currentVersion = extractVersion(CURRENT || '0.0.0');
+
+  if (CURRENT && !isNewer(latestVersion, currentVersion)) {
+    $('desc').textContent = `You are already on the latest version (${latestTag} → ${latestVersion}).`;
     $('btn-folder').classList.add('hidden');
     return;
   }
 
-  $('desc').textContent = `Latest version: ${latestTag}. Select your extension folder to update.`;
+  $('desc').textContent = `Latest version: ${latestTag} (${latestVersion}). Select your extension folder to update.`;
 
   const restored = await restoreDirectory();
   if (restored) {
@@ -128,13 +153,13 @@ async function onSelectFolder() {
 }
 
 /* ============================================================
-   Update
+   Update — pulls files from main branch, not release tag
    ============================================================ */
 async function onUpdate() {
   $('btn-update').classList.add('hidden');
   $('btn-retry').classList.add('hidden');
   $('progress').classList.remove('hidden');
-  $('status').textContent = 'Downloading files...';
+  $('status').textContent = 'Downloading files from main branch...';
   $('status').className = 'status';
 
   const total = FILES.length;
@@ -142,7 +167,8 @@ async function onUpdate() {
 
   for (const file of FILES) {
     try {
-      const url = `https://raw.githubusercontent.com/${REPO}/${latestTag}/${file}`;
+      // CHANGED: pulls from main branch instead of release tag
+      const url = `https://raw.githubusercontent.com/${REPO}/main/${file}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error(`HTTP ${res.status} for ${file}`);
 
@@ -181,16 +207,6 @@ async function onUpdate() {
   } catch (e) {
     $('status').textContent = 'Extension reloaded. Refresh your Notion tabs to apply.';
   }
-}
-
-function isNewer(latest, current) {
-  const l = latest.split('.').map(Number);
-  const c = current.split('.').map(Number);
-  for (let i = 0; i < Math.max(l.length, c.length); i++) {
-    if ((l[i] || 0) > (c[i] || 0)) return true;
-    if ((l[i] || 0) < (c[i] || 0)) return false;
-  }
-  return false;
 }
 
 init();

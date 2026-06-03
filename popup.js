@@ -2,8 +2,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const toggleEnabled = document.getElementById('toggle-enabled');
   const styleGrid = document.getElementById('style-grid');
   const statusBadge = document.getElementById('status-badge');
-  const previewEmoji = document.getElementById('preview-emoji');
-  const previewStyle = document.getElementById('preview-style');
   const donateButton = document.getElementById('donate-button');
   const body = document.body;
 
@@ -21,12 +19,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     facebook: '👍'
   };
 
+  /* ============================================================
+     Dynamic version from manifest
+     ============================================================ */
+  document.getElementById('version-display').textContent =
+    'v' + chrome.runtime.getManifest().version;
+
   const defaults = { enabled: true, emojiStyle: 'apple' };
   const settings = await chrome.storage.sync.get(defaults);
 
   toggleEnabled.checked = settings.enabled;
   updateStyleGrid(settings.emojiStyle);
-  updatePreview(settings.emojiStyle);
   updateDisabledState(settings.enabled);
 
   /* ============================================================
@@ -95,7 +98,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const style = card.dataset.style;
 
     updateStyleGrid(style);
-    updatePreview(style);
 
     clearTimeout(styleDebounceTimer);
     styleDebounceTimer = setTimeout(() => {
@@ -117,11 +119,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     styleGrid.querySelectorAll('.style-card').forEach(card => {
       card.classList.toggle('active', card.dataset.style === activeStyle);
     });
-  }
-
-  function updatePreview(style) {
-    previewEmoji.textContent = PREVIEW_EMOJIS[style] || '🚀';
-    previewStyle.textContent = STYLE_NAMES[style] || style;
   }
 
   function updateDisabledState(enabled) {
