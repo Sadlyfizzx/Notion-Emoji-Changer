@@ -13,13 +13,12 @@ const FILES = [
 ];
 
 let dirHandle = null;
-let latestTag = null;
 let latestVersion = null;
 
 const $ = (id) => document.getElementById(id);
 
 /* ============================================================
-   Version extraction — handles messy tags like NotionEmojisChangerv5.3
+   Version extraction
    ============================================================ */
 function extractVersion(str) {
   if (!str) return '0.0.0';
@@ -77,6 +76,39 @@ async function getHandle() {
 }
 
 /* ============================================================
+   Fetch version — API first, then manifest.json fallback
+   ============================================================ */
+async function fetchLatestVersion() {
+  // Try GitHub API first
+  try {
+    const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`);
+    if (res.ok) {
+      const data = await res.json();
+      const ver = extractVersion(data.tag_name);
+      return { version: ver, source: 'release', tag: data.tag_name };
+    }
+    console.warn('[Updater] GitHub API returned', res.status, res.statusText);
+  } catch (e) {
+    console.warn('[Updater] GitHub API failed:', e.message);
+  }
+
+  // Fallback: read manifest.json from main branch
+  try {
+    const res = await fetch(`https://raw.githubusercontent.com/${REPO}/main/manifest.json`);
+    if (res.ok) {
+      const manifest = await res.json();
+      const ver = extractVersion(manifest.version);
+      return { version: ver, source: 'manifest', tag: 'main' };
+    }
+    console.warn('[Updater] Manifest fallback returned', res.status);
+  } catch (e) {
+    console.warn('[Updater] Manifest fallback failed:', e.message);
+  }
+
+  return null;
+}
+
+/* ============================================================
    Init
    ============================================================ */
 async function init() {
@@ -86,46 +118,36 @@ async function init() {
     return;
   }
 
-  const release = await fetchLatest();
-  if (!release) {
-    $('desc').textContent = 'Could not reach GitHub. Check your connection and retry.';
+  const result = await fetchLatestVersion();
+
+  if (!result) {
+    $('desc').textContent = 'Could not reach GitHub. Check your connection, disable ad blockers for this site, or try again in a few minutes.';
     $('btn-folder').classList.add('hidden');
     return;
   }
 
-  latestTag = release.tag_name;
-  latestVersion = extractVersion(latestTag);
+  latestVersion = result.version;
 
   const currentVersion = extractVersion(CURRENT || '0.0.0');
 
   if (CURRENT && !isNewer(latestVersion, currentVersion)) {
-    $('desc').textContent = `You are already on the latest version (${latestTag} → ${latestVersion}).`;
+    $('desc').textContent = `You are already on the latest version (v${latestVersion}).`;
     $('btn-folder').classList.add('hidden');
     return;
   }
 
-  $('desc').textContent = `Latest version: ${latestTag} (${latestVersion}). Select your extension folder to update.`;
+  $('desc').textContent = `Latest version: v${latestVersion} (from ${result.source}). Select your extension folder to update.`;
 
   const restored = await restoreDirectory();
   if (restored) {
     $('btn-folder').classList.add('hidden');
     $('btn-update').classList.remove('hidden');
-    $('desc').textContent = `Folder access granted. Ready to update to ${latestTag}.`;
+    $('desc').textContent = `Folder access granted. Ready to update to v${latestVersion}.`;
   }
 
   $('btn-folder').addEventListener('click', onSelectFolder);
   $('btn-update').addEventListener('click', onUpdate);
   $('btn-retry').addEventListener('click', onUpdate);
-}
-
-async function fetchLatest() {
-  try {
-    const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`);
-    if (!res.ok) return null;
-    return await res.json();
-  } catch (e) {
-    return null;
-  }
 }
 
 async function restoreDirectory() {
@@ -146,14 +168,14 @@ async function onSelectFolder() {
     await saveHandle(dirHandle);
     $('btn-folder').classList.add('hidden');
     $('btn-update').classList.remove('hidden');
-    $('desc').textContent = `Folder selected. Ready to update to ${latestTag}.`;
+    $('desc').textContent = `Folder selected. Ready to update to v${latestVersion}.`;
   } catch (e) {
     $('status').textContent = 'Folder selection cancelled.';
   }
 }
 
 /* ============================================================
-   Update — pulls files from main branch, not release tag
+   Update — pulls files from main branch
    ============================================================ */
 async function onUpdate() {
   $('btn-update').classList.add('hidden');
@@ -167,7 +189,6 @@ async function onUpdate() {
 
   for (const file of FILES) {
     try {
-      // CHANGED: pulls from main branch instead of release tag
       const url = `https://raw.githubusercontent.com/${REPO}/main/${file}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error(`HTTP ${res.status} for ${file}`);
