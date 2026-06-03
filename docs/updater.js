@@ -2,10 +2,6 @@ const REPO = 'Sadlyfizzx/Notion-Emoji-Changer';
 const EXT_ID = new URLSearchParams(location.search).get('id');
 const CURRENT = new URLSearchParams(location.search).get('current');
 
-/* ============================================================
-   ONLY these 7 files are pulled. Repo files (docs/, README.md,
-   CHANGELOG.md, .gitignore, .eslintrc.json) are NOT touched.
-   ============================================================ */
 const FILES = [
   'manifest.json',
   'emojiReplacer.js',
@@ -24,6 +20,7 @@ const CACHE_TTL = 60 * 60 * 1000;
 let dirHandle = null;
 let latestTag = null;
 let latestVersion = null;
+let fileCache = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -149,6 +146,26 @@ async function fetchLatest() {
 }
 
 /* ============================================================
+   Pre-download files in background
+   ============================================================ */
+async function preDownloadFiles() {
+  if (fileCache) return;
+  fileCache = {};
+  try {
+    for (const file of FILES) {
+      const url = `https://raw.githubusercontent.com/${REPO}/main/${file}`;
+      const res = await fetchWithTimeout(url, 10000);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      fileCache[file] = await res.blob();
+    }
+    $('preloaded').classList.remove('hidden');
+  } catch (e) {
+    fileCache = null;
+    console.warn('[Updater] Pre-download failed, will fetch on update:', e);
+  }
+}
+
+/* ============================================================
    Init
    ============================================================ */
 async function init() {
@@ -204,6 +221,17 @@ async function init() {
   latestVersion = extractVersion(latestTag);
   const currentVersion = extractVersion(CURRENT || '0.0.0');
 
+  // Show changelog
+  if (release.body) {
+    const clean = release.body
+      .replace(/!\[.*?\]\(.*?\)/g, '')
+      .replace(/\[.*?\]\(.*?\)/g, '$1')
+      .replace(/[#*`]/g, '')
+      .trim();
+    $('changelog').innerHTML = `<h3>What's new in ${latestTag}</h3>${clean.slice(0, 600)}`;
+    $('changelog').classList.remove('hidden');
+  }
+
   if (CURRENT && !isNewer(latestVersion, currentVersion)) {
     $('desc').textContent = `You are already on the latest version (${latestTag} → ${latestVersion}).`;
     $('btn-folder').classList.add('hidden');
@@ -217,6 +245,7 @@ async function init() {
     $('btn-folder').classList.add('hidden');
     $('btn-update').classList.remove('hidden');
     $('desc').textContent = `Folder access granted. Ready to update to ${latestTag}.`;
+    preDownloadFiles(); // Start downloading in background
   } else {
     const hadBefore = await getHandle();
     if (hadBefore) {
@@ -280,6 +309,7 @@ async function onSelectFolder() {
     $('btn-update').classList.remove('hidden');
     $('desc').textContent = `Folder selected: ${dirHandle.name}. Ready to update to ${latestTag}.`;
     $('status').textContent = '';
+    preDownloadFiles();
   } catch (e) {
     console.error('[Updater] Folder selection failed:', e.name, e.message);
     let msg = 'Folder selection failed.';
@@ -307,7 +337,7 @@ async function onUpdate() {
   $('btn-update').classList.add('hidden');
   $('btn-retry').classList.add('hidden');
   $('progress').classList.remove('hidden');
-  $('status').textContent = 'Starting download...';
+  $('status').textContent = fileCache ? 'Installing...' : 'Downloading files...';
   $('status').className = 'status';
 
   const total = FILES.length;
@@ -317,11 +347,16 @@ async function onUpdate() {
     saveState({ phase: 'writing', currentFile: file, done, total, latestTag });
 
     try {
-      const url = `https://raw.githubusercontent.com/${REPO}/main/${file}`;
-      const res = await fetchWithTimeout(url, 10000);
-      if (!res.ok) throw new Error(`HTTP ${res.status} for ${file}`);
+      let blob;
+      if (fileCache && fileCache[file]) {
+        blob = fileCache[file];
+      } else {
+        const url = `https://raw.githubusercontent.com/${REPO}/main/${file}`;
+        const res = await fetchWithTimeout(url, 10000);
+        if (!res.ok) throw new Error(`HTTP ${res.status} for ${file}`);
+        blob = await res.blob();
+      }
 
-      const blob = await res.blob();
       const fileHandle = await dirHandle.getFileHandle(file, { create: true });
       const writable = await fileHandle.createWritable();
       await writable.write(blob);
@@ -349,6 +384,22 @@ async function onUpdate() {
 
   clearState();
   releaseLock();
+
+  // Validate: read back manifest to confirm version
+  try {
+    const manifestHandle = await dirHandle.getFileHandle('manifest.json');
+    const manifestFile = await manifestHandle.getFile();
+    const manifestText = await manifestFile.text();
+    const manifestJson = JSON.parse(manifestText);
+    const installedVersion = extractVersion(manifestJson.version);
+    if (installedVersion !== latestVersion) {
+      $('status').textContent = `Warning: installed version (${installedVersion}) does not match expected (${latestVersion}).`;
+      $('status').className = 'status error';
+      return;
+    }
+  } catch (e) {
+    console.warn('[Updater] Post-write validation failed:', e);
+  }
 
   const newUrl = new URL(window.location.href);
   newUrl.searchParams.set('current', latestVersion);
