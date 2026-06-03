@@ -2,30 +2,33 @@
 
 Replace Notion's native emojis with Apple, Google, Twitter, or Facebook styled emojis. Popup controls, zero flicker, instant style switching.
 
-[![Version](https://img.shields.io/badge/version-5.1-blue.svg)]()
-[![License](https://img.shields.io/badge/license-MIT-green.svg)]()
+![Version](https://img.shields.io/badge/version-5.3.2-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
+
+> **[⬇ Download Latest Version](https://github.com/Sadlyfizzx/Notion-Emoji-Changer/releases/latest)**
 
 ---
 
 ## What It Does
 
-Notion Emoji Injector intercepts Notion's native emoji rendering and swaps it with high-quality styled emojis from a CDN. Pick your emoji set, toggle injection on/off, and get consistent emojis across your workspace.
+Notion Emoji Injector hooks into Notion's emoji rendering and swaps the native system emojis for styled ones pulled from a CDN. Pick Apple, Google, Twitter, or Facebook — the change applies across every open Notion tab immediately.
 
-Works on Notion Web (Chrome, Edge, Brave, Opera) and Notion Desktop (via DevTools console injection).
+Works on Notion Web (Chrome, Edge, Brave, Opera) and Notion Desktop via DevTools console injection.
 
 ---
 
 ## Features
 
 | Feature | Description |
-|---------|-------------|
+| --- | --- |
 | **4 Emoji Styles** | Apple, Google, Twitter, and Facebook — switch anytime from the popup. |
-| **Control Panel** | Toggle the extension on/off, pick your style, and preview it live. Turning it off restores your native Notion emojis. |
+| **Control Panel** | Toggle the extension on/off, pick your style, and preview it live. Turning it off refreshes the page to restore native Notion emojis. |
 | **Synced Settings** | Your preferences carry over across tabs and browser sessions automatically. |
+| **CDN Fallback** | If the primary CDN is unreachable, the extension falls back to jsDelivr automatically. |
 
 ---
 
 ## Preview
+
 ### Apple Emoji Style Preview
 <img width="1900" height="814" alt="Apple Emoji" src="https://github.com/user-attachments/assets/dee349c6-3105-40a1-9b5e-feb787ab0e6b" />
 
@@ -44,7 +47,7 @@ Works on Notion Web (Chrome, Edge, Brave, Opera) and Notion Desktop (via DevTool
 
 ### Browser Extension (Recommended)
 
-1. Download the latest release from the [Releases](../../releases) page.
+1. Download the latest release from the [Releases](https://github.com/Sadlyfizzx/Notion-Emoji-Changer/releases) page.
 2. Unzip the folder.
 3. Open your browser's extension management page:
    - Chrome: `chrome://extensions`
@@ -61,7 +64,7 @@ Works on Notion Web (Chrome, Edge, Brave, Opera) and Notion Desktop (via DevTool
 1. Open the Notion Desktop app.
 2. Press `Alt` → `View` → `Toggle Developer Tools`.
 3. Go to the **Console** tab.
-4. Paste the contents of [`emojiReplacer.js`](../../blob/main/emojiReplacer.js) and press Enter.
+4. Paste the contents of `emojiReplacer.js` and press Enter.
 
 ---
 
@@ -70,8 +73,8 @@ Works on Notion Web (Chrome, Edge, Brave, Opera) and Notion Desktop (via DevTool
 Click the extension icon to open the control panel:
 
 | Control | What It Does |
-|---------|-------------|
-| **Enable Injection** | Turn the extension on or off. Turning off refreshes the active Notion tab to restore native emojis. |
+| --- | --- |
+| **Enable Injection** | Turn the extension on or off. Disabling refreshes the page to restore native emojis. |
 | **Emoji Style** | Pick Apple, Google, Twitter, or Facebook. Updates all open Notion tabs instantly. |
 | **Live Preview** | See your selected style in the popup before closing it. |
 
@@ -81,11 +84,23 @@ Settings save automatically and sync across your browser profile.
 
 ## Architecture
 
-- **Dynamic CSS Injection** — Styles are only injected when enabled, so disabling leaves no residue.
-- **Dual Observer Strategy** — A debounced `MutationObserver` handles real-time DOM changes; `requestIdleCallback` catches any React re-renders it misses.
-- **CDN Abstraction** — Emoji URLs build dynamically from the selected style, so switching is instant.
-- **Processed Marking** — Elements get tagged with `data-apple-emoji-v3` to prevent redundant processing and loops.
+- **Dynamic CSS Injection** — Styles are injected when enabled. Disabling triggers a page refresh so native emojis come back cleanly.
+- **Scoped MutationObserver** — Watches for newly added DOM nodes only, avoiding CPU thrashing from React attribute mutations.
+- **CDN Abstraction** — Emoji URLs build dynamically from the selected style with automatic fallback to jsDelivr.
+- **Processed Marking** — Elements get tagged with `data-emoji-injected` to prevent redundant processing and loops.
 - **Overlay Detection** — Page icons use a two-image structure (base + overlay). The extension targets only the overlay to avoid double-render bugs.
+- **Preload Queue** — Limits concurrent image requests and enforces a 5-second timeout to prevent network deadlocks.
+
+---
+
+## Privacy
+
+This extension loads emoji images from third-party CDNs:
+
+- **Primary**: `emojicdn.elk.sh`
+- **Fallback**: `cdn.jsdelivr.net` (emoji-datasource packages)
+
+Only the **emoji character itself** is sent to these services (e.g. `🚀`). Your Notion page content, workspace data, and personal information are never transmitted. No analytics or tracking are implemented.
 
 ---
 
@@ -93,22 +108,7 @@ Settings save automatically and sync across your browser profile.
 
 - Some complex ZWJ sequences (e.g., 🧑‍💻, 👨‍👩‍👧‍👦) may render slightly split due to CDN sprite limitations.
 - Desktop app requires manual re-injection after every app restart.
-
----
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/YourFeature`
-3. Commit: `git commit -am 'Add YourFeature'`
-4. Push: `git push origin feature/YourFeature`
-5. Open a Pull Request
-
----
-
-## License
-
-[MIT License](LICENSE)
+- If emojis stop loading entirely, the primary CDN may be down — the fallback should activate automatically within 5 seconds.
 
 ---
 
