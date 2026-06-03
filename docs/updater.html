@@ -80,11 +80,29 @@
       transition: width 0.3s ease;
     }
     .hidden { display: none !important; }
-    .file-list {
-      font-size: 11px;
+    .changelog {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 16px;
+      font-size: 12px;
       color: var(--muted);
-      margin-top: 8px;
-      font-family: monospace;
+      line-height: 1.5;
+      max-height: 140px;
+      overflow-y: auto;
+    }
+    .changelog h3 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .preloaded {
+      font-size: 11px;
+      color: var(--success);
+      margin-bottom: 10px;
     }
   </style>
 </head>
@@ -92,6 +110,9 @@
   <div class="card">
     <h1>🎨 Extension Updater</h1>
     <p id="desc">Checking for the latest version...</p>
+
+    <div id="changelog" class="changelog hidden"></div>
+    <div id="preloaded" class="preloaded hidden">Files pre-downloaded. Update will be instant.</div>
 
     <button id="btn-folder" class="btn btn-primary">Select Extension Folder</button>
     <button id="btn-update" class="btn btn-primary hidden">Update Now</button>
@@ -102,7 +123,6 @@
     </div>
 
     <div class="status" id="status"></div>
-    <div class="file-list hidden" id="file-list"></div>
   </div>
   <script src="updater.js"></script>
 </body>
