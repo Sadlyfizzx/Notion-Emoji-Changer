@@ -145,9 +145,6 @@ async function fetchLatest() {
   }
 }
 
-/* ============================================================
-   Pre-download files in background
-   ============================================================ */
 async function preDownloadFiles() {
   if (fileCache) return;
   fileCache = {};
@@ -161,8 +158,17 @@ async function preDownloadFiles() {
     $('preloaded').classList.remove('hidden');
   } catch (e) {
     fileCache = null;
-    console.warn('[Updater] Pre-download failed, will fetch on update:', e);
+    console.warn('[Updater] Pre-download failed:', e);
   }
+}
+
+function cleanChangelog(md) {
+  if (!md) return '';
+  return md
+    .replace(/!\[.*?\]\(.*?\)/g, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/[#*`]/g, '')
+    .trim();
 }
 
 /* ============================================================
@@ -170,50 +176,30 @@ async function preDownloadFiles() {
    ============================================================ */
 async function init() {
   if (!EXT_ID) {
-    $('desc').textContent = 'Please open this updater from the extension popup.';
-    $('btn-folder').classList.add('hidden');
-    $('status').innerHTML = `
-      <button onclick="window.open('https://github.com/Sadlyfizzx/Notion-Emoji-Changer','_blank')" 
-              style="background:var(--accent);color:#fff;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;font-weight:600">
-        Open GitHub for manual download
-      </button>
-    `;
+    showError('Please open this updater from the extension popup.', `
+      <div class="step"><span class="step-num">1</span>Open the Notion Emoji Injector extension icon</div>
+      <div class="step"><span class="step-num">2</span>Click the Update button in the popup</div>
+    `);
     return;
   }
 
   if (!window.showDirectoryPicker) {
     const onBrave = isBrave();
-    $('desc').textContent = onBrave
-      ? 'Brave blocks folder access by default. Enable it below.'
-      : 'Your browser does not support automatic folder updates.';
-    $('btn-folder').classList.add('hidden');
-
-    if (onBrave) {
-      $('status').innerHTML = `
-        <div style="margin-bottom:10px">
-          1. Open <code style="background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px">brave://flags</code><br>
-          2. Search <code style="background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px">file-system-access-api</code><br>
-          3. Set to <strong>Enabled</strong> and relaunch Brave<br>
-          4. Refresh this page
-        </div>
-        <a href="https://github.com/Sadlyfizzx/Notion-Emoji-Changer/archive/refs/heads/main.zip" 
-           target="_blank" style="color:#6366f1;font-weight:600">Or download zip manually →</a>
-      `;
-    } else {
-      $('status').innerHTML = `
-        <div style="margin-bottom:8px">Use Chrome or Edge on desktop for one-click updates.</div>
-        <a href="https://github.com/Sadlyfizzx/Notion-Emoji-Changer/archive/refs/heads/main.zip" 
-           target="_blank" style="color:#6366f1;font-weight:600">Download latest zip manually →</a>
-      `;
-    }
-    $('status').className = 'status error';
+    showError(onBrave ? 'Brave blocks folder access by default.' : 'Your browser does not support automatic updates.', onBrave ? `
+      <div class="step"><span class="step-num">1</span>Open <code>brave://flags</code></div>
+      <div class="step"><span class="step-num">2</span>Search <code>file-system-access-api</code></div>
+      <div class="step"><span class="step-num">3</span>Set to <strong>Enabled</strong> and relaunch</div>
+      <div class="step"><span class="step-num">4</span>Refresh this page</div>
+    ` : `
+      <div class="step"><span class="step-num">1</span>Use Chrome or Edge on desktop</div>
+      <div class="step"><span class="step-num">2</span>Or download the zip and update manually</div>
+    `);
     return;
   }
 
   const release = await fetchLatest();
   if (!release) {
-    $('desc').textContent = 'Could not reach GitHub. Check your connection and retry.';
-    $('btn-folder').classList.add('hidden');
+    showError('Could not reach GitHub.', 'Check your internet connection and refresh the page.');
     return;
   }
 
@@ -221,41 +207,33 @@ async function init() {
   latestVersion = extractVersion(latestTag);
   const currentVersion = extractVersion(CURRENT || '0.0.0');
 
-  // Show changelog
+  $('version-badge').textContent = latestTag;
+  $('version-current').textContent = CURRENT ? `You have v${CURRENT}` : '';
+
   if (release.body) {
-    const clean = release.body
-      .replace(/!\[.*?\]\(.*?\)/g, '')
-      .replace(/\[.*?\]\(.*?\)/g, '$1')
-      .replace(/[#*`]/g, '')
-      .trim();
-    $('changelog').innerHTML = `<h3>What's new in ${latestTag}</h3>${clean.slice(0, 600)}`;
+    $('changelog-body').textContent = cleanChangelog(release.body);
     $('changelog').classList.remove('hidden');
   }
 
   if (CURRENT && !isNewer(latestVersion, currentVersion)) {
-    $('desc').textContent = `You are already on the latest version (${latestTag} → ${latestVersion}).`;
-    $('btn-folder').classList.add('hidden');
+    $('header-sub').textContent = 'You are already on the latest version.';
+    $('main-card').classList.add('hidden');
     return;
   }
 
-  $('desc').textContent = `Latest version: ${latestTag} (${latestVersion}). Select your extension folder to update.`;
+  $('header-sub').textContent = `Update from v${currentVersion} to ${latestTag}`;
+  $('main-card').classList.remove('hidden');
 
   const restored = await restoreDirectory();
   if (restored) {
     $('btn-folder').classList.add('hidden');
     $('btn-update').classList.remove('hidden');
-    $('desc').textContent = `Folder access granted. Ready to update to ${latestTag}.`;
-    preDownloadFiles(); // Start downloading in background
-  } else {
-    const hadBefore = await getHandle();
-    if (hadBefore) {
-      $('status').textContent = 'Previous folder access expired. Please re-select your extension folder.';
-    }
+    preDownloadFiles();
   }
 
   const state = loadState();
   if (state && state.phase === 'writing' && state.latestTag === latestTag) {
-    $('desc').textContent = 'Update was interrupted. Click Update to resume.';
+    $('header-sub').textContent = 'Update was interrupted. Resume to finish.';
     $('btn-folder').classList.add('hidden');
     $('btn-update').classList.remove('hidden');
     $('btn-update').textContent = 'Resume Update';
@@ -264,6 +242,14 @@ async function init() {
   $('btn-folder').addEventListener('click', onSelectFolder);
   $('btn-update').addEventListener('click', onUpdate);
   $('btn-retry').addEventListener('click', onUpdate);
+}
+
+function showError(title, stepsHtml) {
+  $('header-sub').textContent = 'Something went wrong';
+  $('main-card').classList.add('hidden');
+  $('error-card').classList.remove('hidden');
+  $('error-status').textContent = title;
+  $('error-steps').innerHTML = stepsHtml;
 }
 
 async function restoreDirectory() {
@@ -307,16 +293,15 @@ async function onSelectFolder() {
     await saveHandle(dirHandle);
     $('btn-folder').classList.add('hidden');
     $('btn-update').classList.remove('hidden');
-    $('desc').textContent = `Folder selected: ${dirHandle.name}. Ready to update to ${latestTag}.`;
     $('status').textContent = '';
     preDownloadFiles();
   } catch (e) {
     console.error('[Updater] Folder selection failed:', e.name, e.message);
     let msg = 'Folder selection failed.';
     if (e.name === 'AbortError') {
-      msg = 'You cancelled the picker. Click the button again and select your extension folder.';
+      msg = 'You cancelled the picker. Click again to select your extension folder.';
     } else if (e.name === 'SecurityError') {
-      msg = 'Permission blocked. Reset site permissions for sadlyfizzx.github.io in browser settings.';
+      msg = 'Permission blocked. Reset site permissions for sadlyfizzx.github.io.';
     } else if (e.name === 'NotAllowedError') {
       msg = 'Browser denied access. Use a normal (non-incognito) window.';
     } else {
@@ -337,7 +322,7 @@ async function onUpdate() {
   $('btn-update').classList.add('hidden');
   $('btn-retry').classList.add('hidden');
   $('progress').classList.remove('hidden');
-  $('status').textContent = fileCache ? 'Installing...' : 'Downloading files...';
+  $('status').textContent = fileCache ? 'Installing...' : 'Downloading...';
   $('status').className = 'status';
 
   const total = FILES.length;
@@ -364,18 +349,17 @@ async function onUpdate() {
 
       done++;
       $('fill').style.width = `${(done / total) * 100}%`;
-      $('status').textContent = `Writing ${file}... (${done}/${total})`;
+      $('progress-file').textContent = `Writing ${file}`;
+      $('progress-count').textContent = `${done}/${total}`;
     } catch (e) {
       releaseLock();
       let msg = `Error writing ${file}: ${e.message}.`;
       if (e.name === 'NotAllowedError' || e.message.includes('lock') || e.message.includes('denied')) {
-        msg = `Chrome locked the extension files. 
-          <a href="chrome://extensions" target="_blank" style="color:#6366f1;font-weight:600">Disable the extension temporarily</a>, 
-          then click Retry.`;
+        msg = 'Chrome locked the extension files. Disable the extension in chrome://extensions temporarily, then retry.';
       } else if (e.name === 'AbortError') {
         msg = 'Download timed out. Check your connection and retry.';
       }
-      $('status').innerHTML = msg;
+      $('status').textContent = msg;
       $('status').className = 'status error';
       $('btn-retry').classList.remove('hidden');
       return;
@@ -385,7 +369,6 @@ async function onUpdate() {
   clearState();
   releaseLock();
 
-  // Validate: read back manifest to confirm version
   try {
     const manifestHandle = await dirHandle.getFileHandle('manifest.json');
     const manifestFile = await manifestHandle.getFile();
@@ -405,26 +388,25 @@ async function onUpdate() {
   newUrl.searchParams.set('current', latestVersion);
   history.replaceState(null, '', newUrl.toString());
 
-  $('status').textContent = 'Files updated. Reloading extension...';
+  $('progress').classList.add('hidden');
+  $('status').textContent = 'Extension updated successfully!';
   $('status').className = 'status success';
 
   try {
     chrome.runtime.sendMessage(EXT_ID, { action: 'reload-extension' }, (res) => {
       if (chrome.runtime.lastError) {
         $('status').innerHTML = `
-          <div class="success">Extension updated successfully!</div>
-          <div style="margin-top:8px;color:var(--muted)">
-            If it did not reload automatically, go to 
-            <code style="background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px">chrome://extensions</code> 
-            and click the refresh icon on Notion Emoji Injector.
+          Extension updated! 
+          <div style="margin-top:8px;color:var(--text-dim)">
+            If it did not reload automatically, go to chrome://extensions and click the refresh icon.
           </div>
         `;
         return;
       }
-      $('status').textContent = 'Extension updated successfully! Refresh your Notion tabs.';
+      $('status').textContent = 'Extension updated and reloaded! Refresh your Notion tabs.';
     });
   } catch (e) {
-    $('status').textContent = 'Extension reloaded. Refresh your Notion tabs to apply.';
+    $('status').textContent = 'Extension updated! Refresh your Notion tabs to apply.';
   }
 }
 
