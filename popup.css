@@ -410,8 +410,8 @@ body.disabled .control-section:first-of-type {
 
 .update-banner {
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  border-radius: var(--radius-sm);
-  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  padding: 14px;
   margin-bottom: 12px;
   animation: slideDown 0.3s ease;
 }
@@ -453,9 +453,9 @@ body.disabled .control-section:first-of-type {
 }
 
 .update-version {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .update-btn {
@@ -463,7 +463,7 @@ body.disabled .control-section:first-of-type {
   font-weight: 600;
   color: #fff;
   background: rgba(0, 0, 0, 0.25);
-  padding: 5px 10px;
+  padding: 6px 12px;
   border-radius: 6px;
   border: none;
   cursor: pointer;
@@ -491,17 +491,23 @@ body.disabled .control-section:first-of-type {
 }
 
 /* ============================================================
-   Update Notes (changelog snippet)
+   Changelog inside update banner
    ============================================================ */
 
 .update-notes {
   font-size: 11px;
-  color: var(--text-muted);
-  margin-top: 8px;
-  line-height: 1.4;
-  max-height: 3.2em;
+  color: rgba(255, 255, 255, 0.85);
+  margin-top: 10px;
+  line-height: 1.5;
+  max-height: 4.5em;
   overflow: hidden;
   padding-left: 2px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  padding-top: 8px;
+}
+
+.update-notes.hidden {
+  display: none;
 }
 
 /* ============================================================

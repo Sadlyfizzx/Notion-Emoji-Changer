@@ -61,13 +61,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function cleanNotes(md) {
+    if (!md) return '';
     return md
       .replace(/!\[.*?\]\(.*?\)/g, '')
-      .replace(/\[.*?\]\(.*?\)/g, '$1')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
       .replace(/[#*`]/g, '')
       .replace(/\n+/g, ' ')
       .trim()
-      .slice(0, 120);
+      .slice(0, 200);
   }
 
   updateBtn.addEventListener('click', () => {
