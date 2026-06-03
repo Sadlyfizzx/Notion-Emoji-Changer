@@ -2,6 +2,10 @@ const REPO = 'Sadlyfizzx/Notion-Emoji-Changer';
 const EXT_ID = new URLSearchParams(location.search).get('id');
 const CURRENT = new URLSearchParams(location.search).get('current');
 
+/* ============================================================
+   ONLY these 7 files are pulled. Repo files (docs/, README.md,
+   CHANGELOG.md, .gitignore, .eslintrc.json) are NOT touched.
+   ============================================================ */
 const FILES = [
   'manifest.json',
   'emojiReplacer.js',
@@ -90,9 +94,6 @@ async function clearHandle() {
   });
 }
 
-/* ============================================================
-   Lock
-   ============================================================ */
 function acquireLock() {
   const now = Date.now();
   const start = localStorage.getItem(UPDATE_LOCK_KEY);
@@ -105,9 +106,6 @@ function releaseLock() {
   localStorage.removeItem(UPDATE_LOCK_KEY);
 }
 
-/* ============================================================
-   State
-   ============================================================ */
 function saveState(state) {
   sessionStorage.setItem(SESSION_KEY, JSON.stringify(state));
 }
@@ -120,9 +118,6 @@ function clearState() {
   sessionStorage.removeItem(SESSION_KEY);
 }
 
-/* ============================================================
-   Fetch with timeout + cache
-   ============================================================ */
 async function fetchWithTimeout(url, timeoutMs = 10000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -229,7 +224,6 @@ async function init() {
     }
   }
 
-  // Check for interrupted update
   const state = loadState();
   if (state && state.phase === 'writing' && state.latestTag === latestTag) {
     $('desc').textContent = 'Update was interrupted. Click Update to resume.';
@@ -356,7 +350,6 @@ async function onUpdate() {
   clearState();
   releaseLock();
 
-  // Update URL so refresh shows "already latest"
   const newUrl = new URL(window.location.href);
   newUrl.searchParams.set('current', latestVersion);
   history.replaceState(null, '', newUrl.toString());
