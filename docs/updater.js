@@ -12,6 +12,11 @@ const FILES = [
   'Icon.png'
 ];
 
+const SESSION_KEY = 'emoji-update-state';
+const UPDATE_LOCK_KEY = 'emoji-injector-updating';
+const RELEASE_CACHE_KEY = 'emoji-release-cache';
+const CACHE_TTL = 60 * 60 * 1000;
+
 let dirHandle = null;
 let latestTag = null;
 let latestVersion = null;
@@ -74,6 +79,80 @@ async function getHandle() {
   });
 }
 
+async function clearHandle() {
+  const db = await openDB();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    const os = tx.objectStore(STORE);
+    const r = os.delete('dir');
+    r.onsuccess = () => res();
+    r.onerror = () => rej(r.error);
+  });
+}
+
+/* ============================================================
+   Lock
+   ============================================================ */
+function acquireLock() {
+  const now = Date.now();
+  const start = localStorage.getItem(UPDATE_LOCK_KEY);
+  if (start && (now - parseInt(start, 10)) < 60000) return false;
+  localStorage.setItem(UPDATE_LOCK_KEY, now.toString());
+  return true;
+}
+
+function releaseLock() {
+  localStorage.removeItem(UPDATE_LOCK_KEY);
+}
+
+/* ============================================================
+   State
+   ============================================================ */
+function saveState(state) {
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(state));
+}
+
+function loadState() {
+  try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)); } catch { return null; }
+}
+
+function clearState() {
+  sessionStorage.removeItem(SESSION_KEY);
+}
+
+/* ============================================================
+   Fetch with timeout + cache
+   ============================================================ */
+async function fetchWithTimeout(url, timeoutMs = 10000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timer);
+    return res;
+  } catch (e) {
+    clearTimeout(timer);
+    throw e;
+  }
+}
+
+async function fetchLatest() {
+  const cached = localStorage.getItem(RELEASE_CACHE_KEY);
+  if (cached) {
+    const { data, timestamp } = JSON.parse(cached);
+    if (Date.now() - timestamp < CACHE_TTL) return data;
+  }
+  try {
+    const res = await fetchWithTimeout(`https://api.github.com/repos/${REPO}/releases/latest`, 8000);
+    if (!res.ok) return null;
+    const data = await res.json();
+    localStorage.setItem(RELEASE_CACHE_KEY, JSON.stringify({ data, timestamp: Date.now() }));
+    return data;
+  } catch (e) {
+    return null;
+  }
+}
+
 /* ============================================================
    Init
    ============================================================ */
@@ -81,10 +160,15 @@ async function init() {
   if (!EXT_ID) {
     $('desc').textContent = 'Please open this updater from the extension popup.';
     $('btn-folder').classList.add('hidden');
+    $('status').innerHTML = `
+      <button onclick="window.open('https://github.com/Sadlyfizzx/Notion-Emoji-Changer','_blank')" 
+              style="background:var(--accent);color:#fff;border:none;padding:8px 14px;border-radius:6px;cursor:pointer;font-weight:600">
+        Open GitHub for manual download
+      </button>
+    `;
     return;
   }
 
-  // CRITICAL: Check if File System Access API is available
   if (!window.showDirectoryPicker) {
     const onBrave = isBrave();
     $('desc').textContent = onBrave
@@ -138,21 +222,25 @@ async function init() {
     $('btn-folder').classList.add('hidden');
     $('btn-update').classList.remove('hidden');
     $('desc').textContent = `Folder access granted. Ready to update to ${latestTag}.`;
+  } else {
+    const hadBefore = await getHandle();
+    if (hadBefore) {
+      $('status').textContent = 'Previous folder access expired. Please re-select your extension folder.';
+    }
+  }
+
+  // Check for interrupted update
+  const state = loadState();
+  if (state && state.phase === 'writing' && state.latestTag === latestTag) {
+    $('desc').textContent = 'Update was interrupted. Click Update to resume.';
+    $('btn-folder').classList.add('hidden');
+    $('btn-update').classList.remove('hidden');
+    $('btn-update').textContent = 'Resume Update';
   }
 
   $('btn-folder').addEventListener('click', onSelectFolder);
   $('btn-update').addEventListener('click', onUpdate);
   $('btn-retry').addEventListener('click', onUpdate);
-}
-
-async function fetchLatest() {
-  try {
-    const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`);
-    if (!res.ok) return null;
-    return await res.json();
-  } catch (e) {
-    return null;
-  }
 }
 
 async function restoreDirectory() {
@@ -161,8 +249,24 @@ async function restoreDirectory() {
     if (!handle) return false;
     dirHandle = handle;
     const perm = await dirHandle.requestPermission({ mode: 'readwrite' });
+    if (perm === 'denied') {
+      await clearHandle();
+      return false;
+    }
     return perm === 'granted';
   } catch (e) {
+    return false;
+  }
+}
+
+async function validateFolder(handle) {
+  try {
+    const manifestHandle = await handle.getFileHandle('manifest.json');
+    const file = await manifestHandle.getFile();
+    const text = await file.text();
+    const json = JSON.parse(text);
+    return json.name === 'Notion Emoji Injector';
+  } catch {
     return false;
   }
 }
@@ -170,10 +274,17 @@ async function restoreDirectory() {
 async function onSelectFolder() {
   try {
     dirHandle = await window.showDirectoryPicker();
+    const isValid = await validateFolder(dirHandle);
+    if (!isValid) {
+      $('status').textContent = 'This folder does not contain the extension. Look for the folder with manifest.json.';
+      $('status').className = 'status error';
+      dirHandle = null;
+      return;
+    }
     await saveHandle(dirHandle);
     $('btn-folder').classList.add('hidden');
     $('btn-update').classList.remove('hidden');
-    $('desc').textContent = `Folder selected. Ready to update to ${latestTag}.`;
+    $('desc').textContent = `Folder selected: ${dirHandle.name}. Ready to update to ${latestTag}.`;
     $('status').textContent = '';
   } catch (e) {
     console.error('[Updater] Folder selection failed:', e.name, e.message);
@@ -181,9 +292,9 @@ async function onSelectFolder() {
     if (e.name === 'AbortError') {
       msg = 'You cancelled the picker. Click the button again and select your extension folder.';
     } else if (e.name === 'SecurityError') {
-      msg = 'Permission blocked. Try resetting site permissions for sadlyfizzx.github.io in chrome://settings/content/all';
+      msg = 'Permission blocked. Reset site permissions for sadlyfizzx.github.io in browser settings.';
     } else if (e.name === 'NotAllowedError') {
-      msg = 'Browser denied access. Make sure you are on HTTPS and not in an incognito window.';
+      msg = 'Browser denied access. Use a normal (non-incognito) window.';
     } else {
       msg = `Error (${e.name}): ${e.message}`;
     }
@@ -193,19 +304,27 @@ async function onSelectFolder() {
 }
 
 async function onUpdate() {
+  if (!acquireLock()) {
+    $('status').textContent = 'An update is already running in another tab. Please wait.';
+    $('status').className = 'status error';
+    return;
+  }
+
   $('btn-update').classList.add('hidden');
   $('btn-retry').classList.add('hidden');
   $('progress').classList.remove('hidden');
-  $('status').textContent = 'Downloading files from main branch...';
+  $('status').textContent = 'Starting download...';
   $('status').className = 'status';
 
   const total = FILES.length;
   let done = 0;
 
   for (const file of FILES) {
+    saveState({ phase: 'writing', currentFile: file, done, total, latestTag });
+
     try {
       const url = `https://raw.githubusercontent.com/${REPO}/main/${file}`;
-      const res = await fetch(url);
+      const res = await fetchWithTimeout(url, 10000);
       if (!res.ok) throw new Error(`HTTP ${res.status} for ${file}`);
 
       const blob = await res.blob();
@@ -216,18 +335,31 @@ async function onUpdate() {
 
       done++;
       $('fill').style.width = `${(done / total) * 100}%`;
-      $('status').textContent = `Writing ${file}...`;
+      $('status').textContent = `Writing ${file}... (${done}/${total})`;
     } catch (e) {
+      releaseLock();
       let msg = `Error writing ${file}: ${e.message}.`;
-      if (e.name === 'NotAllowedError' || e.message.includes('lock')) {
-        msg += ' Disable the extension in chrome://extensions temporarily, then retry.';
+      if (e.name === 'NotAllowedError' || e.message.includes('lock') || e.message.includes('denied')) {
+        msg = `Chrome locked the extension files. 
+          <a href="chrome://extensions" target="_blank" style="color:#6366f1;font-weight:600">Disable the extension temporarily</a>, 
+          then click Retry.`;
+      } else if (e.name === 'AbortError') {
+        msg = 'Download timed out. Check your connection and retry.';
       }
-      $('status').textContent = msg;
+      $('status').innerHTML = msg;
       $('status').className = 'status error';
       $('btn-retry').classList.remove('hidden');
       return;
     }
   }
+
+  clearState();
+  releaseLock();
+
+  // Update URL so refresh shows "already latest"
+  const newUrl = new URL(window.location.href);
+  newUrl.searchParams.set('current', latestVersion);
+  history.replaceState(null, '', newUrl.toString());
 
   $('status').textContent = 'Files updated. Reloading extension...';
   $('status').className = 'status success';
@@ -235,7 +367,14 @@ async function onUpdate() {
   try {
     chrome.runtime.sendMessage(EXT_ID, { action: 'reload-extension' }, (res) => {
       if (chrome.runtime.lastError) {
-        $('status').textContent = 'Extension reloaded. Refresh your Notion tabs to apply.';
+        $('status').innerHTML = `
+          <div class="success">Extension updated successfully!</div>
+          <div style="margin-top:8px;color:var(--muted)">
+            If it did not reload automatically, go to 
+            <code style="background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px">chrome://extensions</code> 
+            and click the refresh icon on Notion Emoji Injector.
+          </div>
+        `;
         return;
       }
       $('status').textContent = 'Extension updated successfully! Refresh your Notion tabs.';
