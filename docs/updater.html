@@ -6,123 +6,276 @@
   <title>Notion Emoji Injector — Updater</title>
   <style>
     :root {
-      --bg: #0f0f11;
-      --bg2: #1a1a1e;
+      --bg: #0a0a0c;
+      --bg2: #141418;
+      --bg3: #1e1e24;
       --accent: #6366f1;
+      --accent-hover: #818cf8;
       --text: #f1f1f4;
-      --muted: #a1a1aa;
+      --text-muted: #a1a1aa;
+      --text-dim: #71717a;
       --success: #22c55e;
       --error: #ef4444;
+      --border: rgba(255, 255, 255, 0.06);
+      --radius: 14px;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       background: var(--bg);
       color: var(--text);
-      display: flex;
-      align-items: center;
-      justify-content: center;
       min-height: 100vh;
-      padding: 20px;
+      padding: 40px 20px;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 560px;
+      margin: 0 auto;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .header h1 {
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      letter-spacing: -0.02em;
+    }
+    .header p {
+      color: var(--text-muted);
+      font-size: 14px;
     }
     .card {
       background: var(--bg2);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 16px;
-      padding: 32px;
-      width: 100%;
-      max-width: 440px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 16px;
     }
-    h1 { font-size: 20px; margin-bottom: 8px; }
-    p { color: var(--muted); font-size: 13px; line-height: 1.5; margin-bottom: 20px; }
+    .version-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .version-badge {
+      background: var(--accent);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 100px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .version-current {
+      color: var(--text-dim);
+      font-size: 13px;
+    }
+    .changelog {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .changelog h3 {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      margin-bottom: 10px;
+    }
+    .changelog-body {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
     .btn {
       width: 100%;
-      padding: 12px;
+      padding: 14px;
       border-radius: 10px;
       border: none;
       font-family: inherit;
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 600;
       cursor: pointer;
-      margin-bottom: 10px;
       transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
     .btn-primary {
       background: var(--accent);
       color: #fff;
     }
-    .btn-primary:hover { filter: brightness(1.1); }
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
     .btn-secondary {
-      background: rgba(255,255,255,0.06);
+      background: var(--bg3);
       color: var(--text);
+      border: 1px solid var(--border);
     }
-    .btn-secondary:hover { background: rgba(255,255,255,0.1); }
-    .status {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 12px;
-      min-height: 20px;
-      line-height: 1.4;
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.06);
     }
-    .status.success { color: var(--success); }
-    .status.error { color: var(--error); }
-    .progress { margin-top: 12px; }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .progress {
+      margin-top: 16px;
+    }
     .progress-bar {
-      height: 4px;
-      background: rgba(255,255,255,0.06);
-      border-radius: 2px;
+      height: 6px;
+      background: var(--bg3);
+      border-radius: 3px;
       overflow: hidden;
+      margin-bottom: 10px;
     }
     .progress-fill {
       height: 100%;
       background: var(--accent);
       width: 0%;
-      transition: width 0.3s ease;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .hidden { display: none !important; }
-    .changelog {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 10px;
-      padding: 12px;
-      margin-bottom: 16px;
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
       font-size: 12px;
-      color: var(--muted);
+      color: var(--text-dim);
+    }
+    .status {
+      margin-top: 14px;
+      font-size: 13px;
       line-height: 1.5;
-      max-height: 140px;
-      overflow-y: auto;
+      min-height: 20px;
     }
-    .changelog h3 {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--text-muted);
-      margin-bottom: 6px;
-    }
+    .status.success { color: var(--success); }
+    .status.error { color: var(--error); }
+    .hidden { display: none !important; }
     .preloaded {
-      font-size: 11px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
       color: var(--success);
-      margin-bottom: 10px;
+      margin-bottom: 14px;
+    }
+    .preloaded::before {
+      content: '✓';
+      font-weight: 700;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+    .footer a {
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+    .footer a:hover {
+      color: var(--text);
+    }
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .step-num {
+      background: var(--bg3);
+      color: var(--text-dim);
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    code {
+      background: var(--bg3);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'SF Mono', monospace;
+      font-size: 12px;
+      color: var(--text);
+    }
+    .manual-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      margin-top: 12px;
+    }
+    .manual-link:hover {
+      color: var(--accent-hover);
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>🎨 Extension Updater</h1>
-    <p id="desc">Checking for the latest version...</p>
-
-    <div id="changelog" class="changelog hidden"></div>
-    <div id="preloaded" class="preloaded hidden">Files pre-downloaded. Update will be instant.</div>
-
-    <button id="btn-folder" class="btn btn-primary">Select Extension Folder</button>
-    <button id="btn-update" class="btn btn-primary hidden">Update Now</button>
-    <button id="btn-retry" class="btn btn-secondary hidden">Retry</button>
-
-    <div class="progress hidden" id="progress">
-      <div class="progress-bar"><div class="progress-fill" id="fill"></div></div>
+  <div class="container">
+    <div class="header">
+      <h1>🎨 Extension Updater</h1>
+      <p id="header-sub">Checking for updates...</p>
     </div>
 
-    <div class="status" id="status"></div>
+    <div id="main-card" class="card hidden">
+      <div class="version-row">
+        <span class="version-badge" id="version-badge">v5.3.2</span>
+        <span class="version-current" id="version-current">You have v5.2.0</span>
+      </div>
+
+      <div id="changelog" class="changelog hidden">
+        <h3>What's new</h3>
+        <div class="changelog-body" id="changelog-body"></div>
+      </div>
+
+      <div id="preloaded" class="preloaded hidden">Files ready — update will be instant</div>
+
+      <button id="btn-folder" class="btn btn-primary">Select Extension Folder</button>
+      <button id="btn-update" class="btn btn-primary hidden">Update Now</button>
+      <button id="btn-retry" class="btn btn-secondary hidden">Retry</button>
+
+      <div class="progress hidden" id="progress">
+        <div class="progress-bar"><div class="progress-fill" id="fill"></div></div>
+        <div class="progress-meta">
+          <span id="progress-file">Starting...</span>
+          <span id="progress-count">0/7</span>
+        </div>
+      </div>
+
+      <div class="status" id="status"></div>
+    </div>
+
+    <div id="error-card" class="card hidden">
+      <div class="status error" id="error-status"></div>
+      <div id="error-steps"></div>
+      <a href="https://github.com/Sadlyfizzx/Notion-Emoji-Changer/archive/refs/heads/main.zip" 
+         target="_blank" class="manual-link">Download zip manually →</a>
+    </div>
+
+    <div class="footer">
+      <a href="https://github.com/Sadlyfizzx/Notion-Emoji-Changer" target="_blank">GitHub</a> · 
+      <a href="https://ko-fi.com/sadlyfizzx" target="_blank">Support</a>
+    </div>
   </div>
   <script src="updater.js"></script>
 </body>
