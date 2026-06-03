@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notion Emoji Injector — Updater</title>
+  <style>
+    :root {
+      --bg: #0f0f11;
+      --bg2: #1a1a1e;
+      --accent: #6366f1;
+      --text: #f1f1f4;
+      --muted: #a1a1aa;
+      --success: #22c55e;
+      --error: #ef4444;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .card {
+      background: var(--bg2);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      padding: 32px;
+      width: 100%;
+      max-width: 440px;
+    }
+    h1 { font-size: 20px; margin-bottom: 8px; }
+    p { color: var(--muted); font-size: 13px; line-height: 1.5; margin-bottom: 20px; }
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 10px;
+      transition: all 0.2s ease;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-primary:hover { filter: brightness(1.1); }
+    .btn-secondary {
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.1); }
+    .status {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 12px;
+      min-height: 20px;
+      line-height: 1.4;
+    }
+    .status.success { color: var(--success); }
+    .status.error { color: var(--error); }
+    .progress { margin-top: 12px; }
+    .progress-bar {
+      height: 4px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+    .hidden { display: none !important; }
+    .file-list {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 8px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🎨 Extension Updater</h1>
+    <p id="desc">Checking for the latest version...</p>
+
+    <button id="btn-folder" class="btn btn-primary">Select Extension Folder</button>
+    <button id="btn-update" class="btn btn-primary hidden">Update Now</button>
+    <button id="btn-retry" class="btn btn-secondary hidden">Retry</button>
+
+    <div class="progress hidden" id="progress">
+      <div class="progress-bar"><div class="progress-fill" id="fill"></div></div>
+    </div>
+
+    <div class="status" id="status"></div>
+    <div class="file-list hidden" id="file-list"></div>
+  </div>
+  <script src="updater.js"></script>
+</body>
+</html>
