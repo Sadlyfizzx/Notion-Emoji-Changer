@@ -36,6 +36,10 @@ function isNewer(latest, current) {
   return false;
 }
 
+function isBrave() {
+  return navigator.brave?.isBrave?.() || false;
+}
+
 const DB_NAME = 'EmojiInjectorUpdater';
 const STORE = 'meta';
 
@@ -70,10 +74,43 @@ async function getHandle() {
   });
 }
 
+/* ============================================================
+   Init
+   ============================================================ */
 async function init() {
   if (!EXT_ID) {
     $('desc').textContent = 'Please open this updater from the extension popup.';
     $('btn-folder').classList.add('hidden');
+    return;
+  }
+
+  // CRITICAL: Check if File System Access API is available
+  if (!window.showDirectoryPicker) {
+    const onBrave = isBrave();
+    $('desc').textContent = onBrave
+      ? 'Brave blocks folder access by default. Enable it below.'
+      : 'Your browser does not support automatic folder updates.';
+    $('btn-folder').classList.add('hidden');
+
+    if (onBrave) {
+      $('status').innerHTML = `
+        <div style="margin-bottom:10px">
+          1. Open <code style="background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px">brave://flags</code><br>
+          2. Search <code style="background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px">file-system-access-api</code><br>
+          3. Set to <strong>Enabled</strong> and relaunch Brave<br>
+          4. Refresh this page
+        </div>
+        <a href="https://github.com/Sadlyfizzx/Notion-Emoji-Changer/archive/refs/heads/main.zip" 
+           target="_blank" style="color:#6366f1;font-weight:600">Or download zip manually →</a>
+      `;
+    } else {
+      $('status').innerHTML = `
+        <div style="margin-bottom:8px">Use Chrome or Edge on desktop for one-click updates.</div>
+        <a href="https://github.com/Sadlyfizzx/Notion-Emoji-Changer/archive/refs/heads/main.zip" 
+           target="_blank" style="color:#6366f1;font-weight:600">Download latest zip manually →</a>
+      `;
+    }
+    $('status').className = 'status error';
     return;
   }
 
@@ -132,9 +169,6 @@ async function restoreDirectory() {
 
 async function onSelectFolder() {
   try {
-    if (!window.showDirectoryPicker) {
-      throw new Error('File System Access API not available. Use Chrome or Edge.');
-    }
     dirHandle = await window.showDirectoryPicker();
     await saveHandle(dirHandle);
     $('btn-folder').classList.add('hidden');
@@ -145,13 +179,13 @@ async function onSelectFolder() {
     console.error('[Updater] Folder selection failed:', e.name, e.message);
     let msg = 'Folder selection failed.';
     if (e.name === 'AbortError') {
-      msg = 'Selection cancelled. Click the button again and choose your extension folder.';
+      msg = 'You cancelled the picker. Click the button again and select your extension folder.';
     } else if (e.name === 'SecurityError') {
-      msg = 'Permission denied. Make sure you are on HTTPS and not in an incognito window.';
-    } else if (!window.showDirectoryPicker) {
-      msg = 'Your browser does not support folder selection. Use Chrome or Edge.';
+      msg = 'Permission blocked. Try resetting site permissions for sadlyfizzx.github.io in chrome://settings/content/all';
+    } else if (e.name === 'NotAllowedError') {
+      msg = 'Browser denied access. Make sure you are on HTTPS and not in an incognito window.';
     } else {
-      msg = `Error: ${e.message}`;
+      msg = `Error (${e.name}): ${e.message}`;
     }
     $('status').textContent = msg;
     $('status').className = 'status error';
