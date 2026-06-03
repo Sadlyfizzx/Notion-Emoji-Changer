@@ -29,20 +29,78 @@ document.addEventListener('DOMContentLoaded', async () => {
   updatePreview(settings.emojiStyle);
   updateDisabledState(settings.enabled);
 
-  toggleEnabled.addEventListener('change', async () => {
-    const enabled = toggleEnabled.checked;
-    await chrome.storage.sync.set({ enabled });
-    updateDisabledState(enabled);
-    // Content script tears down or re-initializes automatically via storage.onChanged
+  /* ============================================================
+     Update Banner
+     ============================================================ */
+  const updateBanner = document.getElementById('update-banner');
+  const updateVersion = document.getElementById('update-version');
+  const updateBtn = document.getElementById('update-btn');
+  const dismissUpdate = document.getElementById('dismiss-update');
+
+  async function renderUpdateBanner() {
+    const stored = await chrome.storage.sync.get([
+      'updateAvailable',
+      'latestVersion'
+    ]);
+    if (stored.updateAvailable) {
+      updateBanner.classList.remove('hidden');
+      updateVersion.textContent = `v${stored.latestVersion}`;
+    }
+  }
+
+  updateBtn.addEventListener('click', () => {
+    const extId = chrome.runtime.id;
+    const current = chrome.runtime.getManifest().version;
+    const url = `https://sadlyfizzx.github.io/Notion-Emoji-Changer/updater.html?id=${extId}&current=${current}`;
+    chrome.tabs.create({ url });
   });
 
+  dismissUpdate.addEventListener('click', async () => {
+    updateBanner.classList.add('hidden');
+    await chrome.storage.sync.set({ updateAvailable: false });
+    chrome.action.setBadgeText({ text: '' });
+  });
+
+  renderUpdateBanner();
+
+  /* ============================================================
+     Safe storage writes with error handling + debounce
+     ============================================================ */
+  async function safeStorageSet(data) {
+    try {
+      await chrome.storage.sync.set(data);
+    } catch (e) {
+      console.warn('[Emoji Injector] Storage write failed:', e);
+      const originalText = statusBadge.textContent;
+      const originalClass = statusBadge.className;
+      statusBadge.textContent = 'Error';
+      statusBadge.className = 'badge inactive';
+      setTimeout(() => {
+        statusBadge.textContent = originalText;
+        statusBadge.className = originalClass;
+      }, 1500);
+    }
+  }
+
+  toggleEnabled.addEventListener('change', async () => {
+    const enabled = toggleEnabled.checked;
+    await safeStorageSet({ enabled });
+    updateDisabledState(enabled);
+  });
+
+  let styleDebounceTimer = null;
   styleGrid.addEventListener('click', async (e) => {
     const card = e.target.closest('.style-card');
     if (!card) return;
     const style = card.dataset.style;
-    await chrome.storage.sync.set({ emojiStyle: style });
+
     updateStyleGrid(style);
     updatePreview(style);
+
+    clearTimeout(styleDebounceTimer);
+    styleDebounceTimer = setTimeout(() => {
+      safeStorageSet({ emojiStyle: style });
+    }, 250);
   });
 
   donateButton.addEventListener('click', () => {

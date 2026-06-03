@@ -12,9 +12,22 @@
     />
     <link href="popup.css" rel="stylesheet" />
   <base target="_blank">
+<base target="_blank">
 </head>
   <body>
     <div class="popup-container">
+      <!-- Update Banner -->
+      <div id="update-banner" class="update-banner hidden">
+        <div class="update-content">
+          <div class="update-text">
+            <span class="update-label">Update available</span>
+            <span class="update-version" id="update-version">v0.0.0</span>
+          </div>
+          <button id="update-btn" class="update-btn">Update</button>
+          <button id="dismiss-update" class="dismiss-btn" aria-label="Dismiss">✕</button>
+        </div>
+      </div>
+
       <!-- Header -->
       <header class="header">
         <div class="logo">
@@ -90,7 +103,7 @@
         <button id="donate-button" class="donate-btn">
           <span>☕</span> Support the project
         </button>
-        <p class="version">v5.2 · Built by Ziad</p>
+        <p class="version">v5.3.2 · Built by Ziad</p>
       </footer>
     </div>
 
