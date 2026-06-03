@@ -12,18 +12,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     facebook: 'Facebook'
   };
 
-  const PREVIEW_EMOJIS = {
-    apple: '🍎',
-    google: '🍏',
-    twitter: '🐦',
-    facebook: '👍'
-  };
-
   /* ============================================================
      Dynamic version from manifest
      ============================================================ */
-  document.getElementById('version-display').textContent =
-    'v' + chrome.runtime.getManifest().version;
+  const manifest = chrome.runtime.getManifest();
+  document.getElementById('version-display').textContent = 'v' + manifest.version;
 
   const defaults = { enabled: true, emojiStyle: 'apple' };
   const settings = await chrome.storage.sync.get(defaults);
@@ -33,27 +26,53 @@ document.addEventListener('DOMContentLoaded', async () => {
   updateDisabledState(settings.enabled);
 
   /* ============================================================
+     "What's New" Toast
+     ============================================================ */
+  const { lastSeenVersion } = await chrome.storage.sync.get('lastSeenVersion');
+  if (lastSeenVersion && lastSeenVersion !== manifest.version) {
+    showToast(`Updated to v${manifest.version}`);
+  }
+  await chrome.storage.sync.set({ lastSeenVersion: manifest.version });
+
+  /* ============================================================
      Update Banner
      ============================================================ */
   const updateBanner = document.getElementById('update-banner');
   const updateVersion = document.getElementById('update-version');
   const updateBtn = document.getElementById('update-btn');
   const dismissUpdate = document.getElementById('dismiss-update');
+  const updateNotes = document.getElementById('update-notes');
 
   async function renderUpdateBanner() {
     const stored = await chrome.storage.sync.get([
       'updateAvailable',
-      'latestVersion'
+      'latestVersion',
+      'releaseNotes'
     ]);
     if (stored.updateAvailable) {
       updateBanner.classList.remove('hidden');
       updateVersion.textContent = `v${stored.latestVersion}`;
+
+      if (stored.releaseNotes) {
+        updateNotes.textContent = cleanNotes(stored.releaseNotes);
+        updateNotes.classList.remove('hidden');
+      }
     }
+  }
+
+  function cleanNotes(md) {
+    return md
+      .replace(/!\[.*?\]\(.*?\)/g, '')
+      .replace(/\[.*?\]\(.*?\)/g, '$1')
+      .replace(/[#*`]/g, '')
+      .replace(/\n+/g, ' ')
+      .trim()
+      .slice(0, 120);
   }
 
   updateBtn.addEventListener('click', () => {
     const extId = chrome.runtime.id;
-    const current = chrome.runtime.getManifest().version;
+    const current = manifest.version;
     const url = `https://sadlyfizzx.github.io/Notion-Emoji-Changer/updater.html?id=${extId}&current=${current}`;
     chrome.tabs.create({ url });
   });
@@ -67,7 +86,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderUpdateBanner();
 
   /* ============================================================
-     Safe storage writes with error handling + debounce
+     Brave hint for auto-updates
+     ============================================================ */
+  if (navigator.brave?.isBrave?.() && !settings.braveFlagHintDismissed) {
+    const braveHint = document.createElement('div');
+    braveHint.className = 'brave-hint';
+    braveHint.innerHTML = `
+      <span>⚡ For one-click updates, enable <code>file-system-access-api</code> in <code>brave://flags</code></span>
+      <button id="dismiss-brave">✕</button>
+    `;
+    document.querySelector('.popup-container').insertBefore(braveHint, document.querySelector('.header'));
+    document.getElementById('dismiss-brave').addEventListener('click', async () => {
+      braveHint.remove();
+      await chrome.storage.sync.set({ braveFlagHintDismissed: true });
+    });
+  }
+
+  /* ============================================================
+     Safe storage writes
      ============================================================ */
   async function safeStorageSet(data) {
     try {
@@ -125,5 +161,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     body.classList.toggle('disabled', !enabled);
     statusBadge.textContent = enabled ? 'Active' : 'Paused';
     statusBadge.classList.toggle('inactive', !enabled);
+  }
+
+  function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add('show'));
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
   }
 });

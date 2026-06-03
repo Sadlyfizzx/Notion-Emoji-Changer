@@ -489,3 +489,85 @@ body.disabled .control-section:first-of-type {
 .dismiss-btn:hover {
   color: #fff;
 }
+
+/* ============================================================
+   Update Notes (changelog snippet)
+   ============================================================ */
+
+.update-notes {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 8px;
+  line-height: 1.4;
+  max-height: 3.2em;
+  overflow: hidden;
+  padding-left: 2px;
+}
+
+/* ============================================================
+   Toast — "Updated to vX.Y.Z"
+   ============================================================ */
+
+.toast {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: var(--success-bg);
+  color: var(--success);
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: 100;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ============================================================
+   Brave Hint
+   ============================================================ */
+
+.brave-hint {
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  animation: slideDown 0.3s ease;
+}
+
+.brave-hint code {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 10px;
+}
+
+.brave-hint button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+  line-height: 1;
+}
+
+.brave-hint button:hover {
+  color: var(--text-primary);
+}

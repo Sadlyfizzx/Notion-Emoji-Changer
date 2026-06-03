@@ -3,7 +3,7 @@
   "name": "Notion Emoji Injector",
   "version": "5.3.2",
   "description": "Replaces Notion emojis with styled color emojis.",
-  "permissions": ["storage", "alarms"],
+  "permissions": ["storage", "alarms", "notifications", "tabs"],
   "host_permissions": [
     "*://app.notion.com/*",
     "https://api.github.com/*"
